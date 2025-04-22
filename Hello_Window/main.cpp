@@ -105,7 +105,7 @@ Application::~Application() {
     glfwTerminate();
 }
 
-//Основной цикл
+//--Основной цикл
 int Application::run() {
     while (!glfwWindowShouldClose(window_)) {
         double current = glfwGetTime();
@@ -122,7 +122,7 @@ int Application::run() {
     return 0;
 }
 
-//Инициализацию нужных переменных и глобальная настройка
+//--Инициализацию нужных переменных и глобальная настройка
 bool Application::initWindow() {
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -143,7 +143,7 @@ bool Application::initWindow() {
     return true;
 }
 
-//Установка CALLBACK's
+//--Установка CALLBACK's
 void Application::setupCallbacks() {
     glfwSetWindowUserPointer(window_, this);
     glfwSetFramebufferSizeCallback(window_, [](GLFWwindow* w, int width, int height) {
@@ -164,7 +164,7 @@ void Application::setupCallbacks() {
     glfwSetInputMode(window_, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 }
 
-//Загрузка ресурсов
+//--Загрузка ресурсов
 void Application::loadResources() {
     shader_ = new Shader("../6.multiple_lights.vs", "../6.multiple_lights.fs");
 
@@ -194,7 +194,7 @@ void Application::loadResources() {
     models_[1]->move(glm::vec3( 5.0f, 0.0f, 0.0f ));
 }
 
-//Передвижение камеры на WASD
+//--Передвижение камеры на WASD
 void Application::processInput() {
     if (glfwGetKey(window_, GLFW_KEY_W) == GLFW_PRESS) camera_.ProcessKeyboard(FORWARD, deltaTime_);
     if (glfwGetKey(window_, GLFW_KEY_S) == GLFW_PRESS) camera_.ProcessKeyboard(BACKWARD, deltaTime_);
@@ -202,13 +202,13 @@ void Application::processInput() {
     if (glfwGetKey(window_, GLFW_KEY_D) == GLFW_PRESS) camera_.ProcessKeyboard(RIGHT, deltaTime_);
 }
 
-//Обновление переменных на каждый кадр
+//--Обновление переменных на каждый кадр
 void Application::update() {
     view_ = camera_.GetViewMatrix();
     projection_ = glm::perspective(glm::radians(camera_.Zoom), float(SCR_WIDTH) / SCR_HEIGHT, 0.1f, 100.0f);
 }
 
-//Основной редндер
+//--Основной редндер
 void Application::render() {
     glClearColor(0.5f, 0.55f, 0.5f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -277,7 +277,7 @@ void Application::onMouseButton(int button, int action) {
     }
 }
 
-//Генерация луча для выбора
+//--Генерация луча для выбора
 Ray Application::generateRay(int mouseX, int mouseY) const {
     float x = (2.0f * mouseX) / SCR_WIDTH - 1.0f;
     float y = 1.0f - (2.0f * mouseY) / SCR_HEIGHT;
@@ -288,7 +288,7 @@ Ray Application::generateRay(int mouseX, int mouseY) const {
     return { glm::vec3(nearP), glm::normalize(glm::vec3(farP - nearP)), glm::vec3(farP) };
 }
 
-//Обраотка пересечений Хитбокса(цилиндр) с лучём
+//--Обраотка пересечений Хитбокса(цилиндр) с лучём
 bool Application::testIntersection(const Ray& ray, const HitBox& box, float& t) const {
     glm::mat4 invModel = glm::translate(glm::mat4(1.0f), -box.position);
     glm::vec3 o = invModel * glm::vec4(ray.origin, 1.0f);
