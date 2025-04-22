@@ -158,6 +158,17 @@
     <ClInclude Include="model.h" />
     <ClInclude Include="shader.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\6.light_cube.fs" />
+    <None Include="..\6.light_cube.vs" />
+    <None Include="..\resources\objects\shashka v4\shashka v4.mtl" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\resources\objects\shashka v4\DefaultMaterial_BaseColor.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Object Include="..\resources\objects\shashka v4\shashka v4.obj" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

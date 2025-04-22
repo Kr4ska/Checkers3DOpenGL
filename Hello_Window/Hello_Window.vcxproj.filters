@@ -33,4 +33,25 @@
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\6.light_cube.fs">
+      <Filter>Файлы ресурсов</Filter>
+    </None>
+    <None Include="..\6.light_cube.vs">
+      <Filter>Файлы ресурсов</Filter>
+    </None>
+    <None Include="..\resources\objects\shashka v4\shashka v4.mtl">
+      <Filter>Файлы ресурсов</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\resources\objects\shashka v4\DefaultMaterial_BaseColor.png">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Object Include="..\resources\objects\shashka v4\shashka v4.obj">
+      <Filter>Файлы ресурсов</Filter>
+    </Object>
+  </ItemGroup>
 </Project>
