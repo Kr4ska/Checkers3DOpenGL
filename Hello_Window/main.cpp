@@ -1,4 +1,3 @@
-// Refactored OpenGL Application
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
@@ -15,18 +14,20 @@
 #include <iostream>
 #include <vector>
 
-using std::vector;
 
+//--Переменные размера окна
 static unsigned int SCR_WIDTH = 1600;
 static unsigned int SCR_HEIGHT = 900;
 
-// Ray structure for picking
+//--Структура луча
 struct Ray {
     glm::vec3 origin;
     glm::vec3 direction;
     glm::vec3 end;
 };
 
+
+//--Класс приложения
 class Application {
 public:
     Application();
@@ -48,7 +49,7 @@ private:
     bool firstMouse_ = true;
 
     // Selection & input state
-    vector<Model*> models_;
+    std::vector<Model*> models_;
     Model* selectedModel_ = nullptr;
     bool modelSelected_ = false;
     bool cursorLocked_ = true;
@@ -83,7 +84,14 @@ private:
     void moveSelected(int key);
 };
 
-// Implementations
+//================================================
+//================================================
+// 
+//---Реализация класса
+// 
+//================================================
+//================================================
+
 
 Application::Application() {
     if (!initWindow()) std::exit(EXIT_FAILURE);
