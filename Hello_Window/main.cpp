@@ -78,7 +78,7 @@ Ray GeneratePickingRay(int mouseX, int mouseY, int screenWidth, int screenHeight
 }
 
 // Проверка пересечения луча с цилиндром
-bool RayHitboxIntersection(const Ray& ray, const BoundingBox& hitbox, float& t) {
+bool RayHitboxIntersection(const Ray& ray, const HitBox& hitbox, float& t) {
     // Преобразование луча в локальное пространство цилиндра
     glm::mat4 invModel = inverse(glm::translate(glm::mat4(1.0f), hitbox.position));
     glm::vec3 localOrigin = invModel * glm::vec4(ray.origin, 1.0f);
