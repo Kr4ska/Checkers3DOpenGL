@@ -8,89 +8,80 @@
 #include "shader.h"
 #include "camera.h"
 #include "model.h"
-
-
-#include <iostream>
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-void mouse_callback(GLFWwindow* window, double xpos, double ypos);
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-void processInput(GLFWwindow* window);
-void mouseCallback(GLFWwindow* window, int button, int action, int mods);
-void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
-// Константы
+#include <iostream>
+#include <vector>
+#include <cmath>
+
+using std::vector;
+
+// --- Константы ---
 const unsigned int SCR_WIDTH = 1600;
 const unsigned int SCR_HEIGHT = 900;
 
-// Камера
+// --- Камера ---
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
+glm::mat4 projection, view;
 
-glm::mat4 projection;
-glm::mat4 view;
-
-// Загрузка моделей
-vector <Model*> arrModel;
-Model* temp = nullptr;
-bool modelEnabled = false;
-// Тайминги
+// --- Тайминг ---
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
+// --- Модели ---
+vector<Model*> arrModel;
+Model* selectedModel = nullptr;
+bool modelSelected = false;
+
+// --- Состояние ввода ---
 namespace Input {
     bool altPressedLastFrame = false;
     bool cursorLocked = true;
     glm::dvec2 cursorPosBeforeLock;
 }
 
+// --- Структура луча ---
 struct Ray {
-    glm::vec3 origin;
-    glm::vec3 direction;
-    glm::vec3 end;
+    glm::vec3 origin, direction, end;
 };
 
-// Генерация луча из позиции курсора
+// --- Прототипы ---
+void framebuffer_size_callback(GLFWwindow*, int, int);
+void cursorPositionCallback(GLFWwindow*, double, double);
+void scrollCallback(GLFWwindow*, double, double);
+void mouseCallback(GLFWwindow*, int, int, int);
+void processInput(GLFWwindow*);
+void keyCallback(GLFWwindow*, int, int, int, int);
+
+// --- Генерация луча ---
 Ray GeneratePickingRay(int mouseX, int mouseY, int screenWidth, int screenHeight,
     const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix) {
-    // Нормализация координат мыши
     float x = (2.0f * mouseX) / screenWidth - 1.0f;
     float y = 1.0f - (2.0f * mouseY) / screenHeight;
-
-    // Матрицы преобразования
     glm::mat4 invViewProj = inverse(projectionMatrix * viewMatrix);
-
-    // Ближняя и дальняя точки
     glm::vec4 nearPoint = invViewProj * glm::vec4(x, y, -1.0f, 1.0f);
     glm::vec4 farPoint = invViewProj * glm::vec4(x, y, 1.0f, 1.0f);
 
-    // Перспективное деление
     nearPoint /= nearPoint.w;
     farPoint /= farPoint.w;
 
-    return {
-        glm::vec3(nearPoint),
-        glm::normalize(glm::vec3(farPoint - nearPoint)),
-        glm::vec3(farPoint)
-    };
+    return { glm::vec3(nearPoint), glm::normalize(glm::vec3(farPoint - nearPoint)), glm::vec3(farPoint) };
 }
 
-// Проверка пересечения луча с цилиндром
+// --- Проверка пересечения луча с цилиндром ---
 bool RayHitboxIntersection(const Ray& ray, const HitBox& hitbox, float& t) {
-    // Преобразование луча в локальное пространство цилиндра
-    glm::mat4 invModel = inverse(glm::translate(glm::mat4(1.0f), hitbox.position));
+    glm::mat4 invModel = glm::translate(glm::mat4(1.0f), -hitbox.position);
     glm::vec3 localOrigin = invModel * glm::vec4(ray.origin, 1.0f);
     glm::vec3 localDir = invModel * glm::vec4(ray.direction, 0.0f);
 
-    // Уравнение цилиндра (ось Y)
     float a = localDir.x * localDir.x + localDir.z * localDir.z;
     float b = 2.0f * (localOrigin.x * localDir.x + localOrigin.z * localDir.z);
     float c = localOrigin.x * localOrigin.x + localOrigin.z * localOrigin.z - hitbox.radius * hitbox.radius;
 
-    // Решение квадратного уравнения
     float discriminant = b * b - 4 * a * c;
     if (discriminant < 0.0f) return false;
 
@@ -98,282 +89,235 @@ bool RayHitboxIntersection(const Ray& ray, const HitBox& hitbox, float& t) {
     float t0 = (-b - sqrtDisc) / (2 * a);
     float t1 = (-b + sqrtDisc) / (2 * a);
 
-    // Поиск ближайшего пересечения в пределах высоты
-    bool hit = false;
     t = INFINITY;
+    bool hit = false;
 
     for (float ti : {t0, t1}) {
         if (ti < 0.0f) continue;
-
         glm::vec3 point = localOrigin + localDir * ti;
-        if (point.y >= 0.0f && point.y <= hitbox.height) {
-            if (ti < t) {
-                t = ti;
-                hit = true;
-            }
+        if (point.y >= 0.0f && point.y <= hitbox.height && ti < t) {
+            t = ti;
+            hit = true;
         }
     }
 
-    // Проверка оснований
-    if (hitbox.height > 0.0f) {
-        // Нижнее основание
-        float tBottom = (-localOrigin.y) / localDir.y;
-        if (tBottom > 0.0f) {
-            glm::vec3 bottomPoint = localOrigin + localDir * tBottom;
-            if (bottomPoint.x * bottomPoint.x + bottomPoint.z * bottomPoint.z <= hitbox.radius * hitbox.radius) {
-                if (tBottom < t) {
-                    t = tBottom;
-                    hit = true;
-                }
-            }
-        }
+    auto checkCap = [&](float tCap, float yCap) {
+        if (tCap <= 0.0f) return false;
+        glm::vec3 point = localOrigin + localDir * tCap;
+        return (point.x * point.x + point.z * point.z <= hitbox.radius * hitbox.radius);
+        };
 
-        // Верхнее основание
-        float tTop = (hitbox.height - localOrigin.y) / localDir.y;
-        if (tTop > 0.0f) {
-            glm::vec3 topPoint = localOrigin + localDir * tTop;
-            if (topPoint.x * topPoint.x + topPoint.z * topPoint.z <= hitbox.radius * hitbox.radius) {
-                if (tTop < t) {
-                    t = tTop;
-                    hit = true;
-                }
-            }
-        }
-    }
+    float tBottom = -localOrigin.y / localDir.y;
+    float tTop = (hitbox.height - localOrigin.y) / localDir.y;
+
+    if (checkCap(tBottom, 0.0f) && tBottom < t) { t = tBottom; hit = true; }
+    if (checkCap(tTop, hitbox.height) && tTop < t) { t = tTop; hit = true; }
 
     return hit;
 }
 
-int main()
-{
-    // glfw: инициализация и конфигурирование
+// --- Главная функция ---
+int main() {
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    // glfw: создание окна
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "OpenGL for Ravesli.com!", NULL, NULL);
-    if (window == NULL)
-    {
-        std::cout << "Failed to create GLFW window" << std::endl;
+    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "OpenGL for Ravesli.com!", nullptr, nullptr);
+    if (!window) {
+        std::cerr << "Failed to create GLFW window\n";
         glfwTerminate();
         return -1;
     }
-    glfwMakeContextCurrent(window);
-    glfwSetMouseButtonCallback(window, mouseCallback);
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-    glfwSetCursorPosCallback(window, mouse_callback);
-    glfwSetScrollCallback(window, scroll_callback);
-    glfwSetKeyCallback(window, keyCallback);
 
-    // Сообщаем GLFW, чтобы он захватил наш курсор
+    glfwMakeContextCurrent(window);
+    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwSetMouseButtonCallback(window, mouseCallback);
+    glfwSetCursorPosCallback(window, cursorPositionCallback);
+    glfwSetScrollCallback(window, scrollCallback);
+    glfwSetKeyCallback(window, keyCallback);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-    // glad: загрузка всех указателей на OpenGL-функции
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-    {
-        std::cout << "Failed to initialize GLAD" << std::endl;
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+        std::cerr << "Failed to initialize GLAD\n";
         return -1;
     }
 
-    // Сообщаем stb_image.h, чтобы он перевернул загруженные текстуры относительно y-оси (до загрузки модели)
     stbi_set_flip_vertically_on_load(true);
-
-    // Конфигурирование глобального состояния OpenGL
     glEnable(GL_DEPTH_TEST);
 
-    // Компилирование нашей шейдерной программы
-    Shader ourShader("../6.multiple_lights.vs", "../6.multiple_lights.fs");
+    Shader shader("../6.multiple_lights.vs", "../6.multiple_lights.fs");
+    Model model1("../resources/objects/shashka v4/shashka v4.obj");
+    Model model2("../resources/objects/shashka v4/shashka v4.obj");
+    model2.move(glm::vec3(5.0f));
 
-    Model ourModel("../resources/objects/shashka v4/shashka v4.obj");
-    arrModel.push_back(&ourModel);
+    arrModel = { &model1, &model2 };
 
-    Model secondModel("../resources/objects/shashka v4/shashka v4.obj");
-    secondModel.move(glm::vec3(5.0f));
-    arrModel.push_back(&secondModel);
-    // Отрисовка в режиме каркаса
-    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-    // Цикл рендеринга
-    while (!glfwWindowShouldClose(window))
-    {
-        // Логическая часть работы со временем для каждого кадра
+    while (!glfwWindowShouldClose(window)) {
         float currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
-        // Обработка ввода
         processInput(window);
 
-        // Рендеринг
         glClearColor(0.5f, 0.55f, 0.5f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // Убеждаемся, что активировали шейдер прежде, чем настраивать uniform-переменные/объекты_рисования
-                // Убеждаемся, что активировали шейдер прежде, чем настраивать uniform-переменные/объекты_рисования
-        ourShader.use();
-        ourShader.setVec3("viewPos", camera.Position);
-        ourShader.setFloat("material.shininess", 32.0f);
+        shader.use();
+        shader.setVec3("viewPos", camera.Position);
+        shader.setFloat("material.shininess", 32.0f);
 
+        shader.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
+        shader.setVec3("dirLight.ambient", glm::vec3(0.05f));
+        shader.setVec3("dirLight.diffuse", glm::vec3(0.4f));
+        shader.setVec3("dirLight.specular", glm::vec3(0.5f));
 
-        // Направленный свет
-        ourShader.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
-        ourShader.setVec3("dirLight.ambient", 0.05f, 0.05f, 0.05f);
-        ourShader.setVec3("dirLight.diffuse", 0.4f, 0.4f, 0.4f);
-        ourShader.setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
+        shader.setVec3("spotLight.position", camera.Position);
+        shader.setVec3("spotLight.direction", camera.Front);
+        shader.setVec3("spotLight.ambient", glm::vec3(0.0f));
+        shader.setVec3("spotLight.diffuse", glm::vec3(1.0f));
+        shader.setVec3("spotLight.specular", glm::vec3(1.0f));
+        shader.setFloat("spotLight.constant", 1.0f);
+        shader.setFloat("spotLight.linear", 0.09f);
+        shader.setFloat("spotLight.quadratic", 0.032f);
+        shader.setFloat("spotLight.cutOff", glm::cos(glm::radians(12.5f)));
+        shader.setFloat("spotLight.outerCutOff", glm::cos(glm::radians(15.0f)));
 
-        // Прожектор
-        ourShader.setVec3("spotLight.position", camera.Position);
-        ourShader.setVec3("spotLight.direction", camera.Front);
-        ourShader.setVec3("spotLight.ambient", 0.0f, 0.0f, 0.0f);
-        ourShader.setVec3("spotLight.diffuse", 1.0f, 1.0f, 1.0f);
-        ourShader.setVec3("spotLight.specular", 1.0f, 1.0f, 1.0f);
-        ourShader.setFloat("spotLight.constant", 1.0f);
-        ourShader.setFloat("spotLight.linear", 0.09);
-        ourShader.setFloat("spotLight.quadratic", 0.032);
-        ourShader.setFloat("spotLight.cutOff", glm::cos(glm::radians(12.5f)));
-        ourShader.setFloat("spotLight.outerCutOff", glm::cos(glm::radians(15.0f)));
-
-        // Преобразования Вида/Проекции
-        projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+        projection = glm::perspective(glm::radians(camera.Zoom),
+            (float)SCR_WIDTH / (float)SCR_HEIGHT,
+            0.1f, 100.0f);
         view = camera.GetViewMatrix();
-        ourShader.setMat4("projection", projection);
-        ourShader.setMat4("view", view);
+        shader.setMat4("projection", projection);
+        shader.setMat4("view", view);
 
-        secondModel.Draw(ourShader);
-        ourModel.Draw(ourShader);
+        for (auto model : arrModel)
+            model->Draw(shader);
 
-        // glfw: обмен содержимым front- и back- буферов. Отслеживание событий ввода/вывода (была ли нажата/отпущена кнопка, перемещен курсор мыши и т.п.)
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
-    // glfw: завершение, освобождение всех выделенных ранее GLFW-реcурсов
     glfwTerminate();
     return 0;
 }
+// Вспомогательные функции
+namespace InputHelpers {
 
-void mouseCallback(GLFWwindow* window, int button, int action, int mods) {
-    if (!Input::cursorLocked){
-        if (GLFW_MOUSE_BUTTON_LEFT == button && action == GLFW_PRESS) {
-            double x, y;
-            float f;
-            glfwGetCursorPos(window, &x, &y);
-            for (int i = 0; i < arrModel.size(); i++)
-            {
-                if (RayHitboxIntersection(GeneratePickingRay(x, y, SCR_WIDTH, SCR_HEIGHT, view, projection), arrModel[i]->checkBox, f)) {
-                    temp = arrModel[i];
-                    modelEnabled = true;
-                }
-            }
-        }
-    }
-}
-
-// Обработка всех событий ввода: запрос GLFW о нажатии/отпускании кнопки мыши в данном кадре и соответствующая обработка данных событий
-void processInput(GLFWwindow* window)
-{
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        camera.ProcessKeyboard(FORWARD, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        camera.ProcessKeyboard(BACKWARD, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        camera.ProcessKeyboard(LEFT, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        camera.ProcessKeyboard(RIGHT, deltaTime);
-}
-
-void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) 
-{
-    bool altPressed = false;
-    if (altPressed = (key == GLFW_KEY_LEFT_ALT && action == GLFW_PRESS)) {
-
-        // Переключение режима только при изменении состояния
-        if (!Input::altPressedLastFrame)
-            Input::cursorLocked = !Input::cursorLocked;
-
+    // Меняет режим захвата курсора
+    void ToggleCursorLock(GLFWwindow* window) {
+        Input::cursorLocked = !Input::cursorLocked;
         if (Input::cursorLocked) {
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-
-            // Возвращаем сохраненную позицию
-            glfwSetCursorPos(window,
-                Input::cursorPosBeforeLock.x,
-                Input::cursorPosBeforeLock.y);
+            glfwSetCursorPos(window, Input::cursorPosBeforeLock.x, Input::cursorPosBeforeLock.y);
         }
         else {
-            // Режим нормальный - показать курсор
-            // Сохраняем текущую позицию перед разблокировкой
-            glfwGetCursorPos(window,
-                &Input::cursorPosBeforeLock.x,
-                &Input::cursorPosBeforeLock.y);
-
+            glfwGetCursorPos(window, &Input::cursorPosBeforeLock.x, &Input::cursorPosBeforeLock.y);
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
         }
     }
-    Input::altPressedLastFrame = altPressed;
 
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-    {
-        if (modelEnabled)
-        {
-            modelEnabled = false;
-            temp = nullptr;
+    // Проверяет, кликнули ли по модели, и сохраняет её в selectedModel
+    void TrySelectModel(GLFWwindow* window, double x, double y) {
+        float hitT;
+        Ray ray = GeneratePickingRay((int)x, (int)y, SCR_WIDTH, SCR_HEIGHT, view, projection);
+        for (Model* m : arrModel) {
+            if (RayHitboxIntersection(ray, m->checkBox, hitT)) {
+                selectedModel = m;
+                modelSelected = true;
+                return;
+            }
         }
-        else
-            glfwSetWindowShouldClose(window, true);
-    }
-    if (modelEnabled) {
-        float speed = 0.05f;
-        if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
-            temp->move(glm::vec3(0.0f, 0.0f, -speed));
-        if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
-            temp->move(glm::vec3(0.0f, 0.0f, speed));
-        if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
-            temp->move(glm::vec3(-speed, 0.0f, 0.0f));
-        if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
-            temp->move(glm::vec3(speed, 0.0f, 0.0f));
     }
 
-};
+    // Перемещает выбранную модель по стрелкам
+    void MoveSelectedModel(int key) {
+        const float speed = 0.05f;
+        if (!modelSelected) return;
 
-// glfw: всякий раз, когда изменяются размеры окна (пользователем или операционной системой), вызывается данная callback-функция
-void framebuffer_size_callback(GLFWwindow* window, int width, int height)
-{
-    // Убеждаемся, что окно просмотра соответствует новым размерам окна.
-    // Обратите внимание, ширина и высота будут значительно больше, чем указано, на Retina-дисплеях
-    glViewport(0, 0, width, height);
+        glm::vec3 delta(0.0f);
+        switch (key) {
+        case GLFW_KEY_UP:    delta.z = -speed; break;
+        case GLFW_KEY_DOWN:  delta.z = speed; break;
+        case GLFW_KEY_LEFT:  delta.x = -speed; break;
+        case GLFW_KEY_RIGHT: delta.x = speed; break;
+        default: return;
+        }
+        selectedModel->move(delta);
+    }
+
 }
 
-// glfw: всякий раз, когда перемещается мышь, вызывается данная callback-функция
-void mouse_callback(GLFWwindow* window, double xpos, double ypos)
-{
-    static bool firstFrame = true;
-    if (firstFrame) {
-        glfwSetCursorPos(window, SCR_WIDTH / 2.0, SCR_HEIGHT / 2.0);
-        firstFrame = false;
+// --- CALLBACK на клик мыши ---
+void mouseCallback(GLFWwindow* window, int button, int action, int mods) {
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS && !Input::cursorLocked) {
+        double x, y;
+        glfwGetCursorPos(window, &x, &y);
+        InputHelpers::TrySelectModel(window, x, y);
+    }
+}
+
+// --- CALLBACK на движение мыши (мышиный look) ---
+void cursorPositionCallback(GLFWwindow* window, double xpos, double ypos) {
+    static bool initialized = false;
+    if (!initialized) {
+        glfwSetCursorPos(window, lastX, lastY);
+        initialized = true;
         return;
     }
-    static bool lastFrameCursorLock = true;
 
-    if (Input::cursorLocked) {
-        // Вычисляем дельту движения
-        glm::dvec2 delta = glm::dvec2(xpos - SCR_WIDTH / 2.0, ypos - SCR_HEIGHT / 2.0);
+    if (!Input::cursorLocked) return;
 
-        if(lastFrameCursorLock)
-            camera.ProcessMouseMovement(delta.x, -delta.y);
-        lastFrameCursorLock = true;
-        // Центрирование курсора
-        glfwSetCursorPos(window, SCR_WIDTH / 2.0, SCR_HEIGHT / 2.0);
-    }
-    else {
-        lastFrameCursorLock = false;
-    }
+    // вычисляем смещение от центра и отправляем в камеру
+    double dx = xpos - lastX;
+    double dy = lastY - ypos; // инвертируем Y, чтобы ↑ было +dy
+    camera.ProcessMouseMovement((float)dx, (float)dy);
 
+    // возвращаем курсор в центр
+    glfwSetCursorPos(window, lastX, lastY);
 }
 
-// glfw: всякий раз, когда прокручивается колесико мыши, вызывается данная callback-функция
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
-{
-    camera.ProcessMouseScroll(yoffset);
+// --- CALLBACK на колёсико мыши ---
+void scrollCallback(GLFWwindow* window, double xoffset, double yoffset) {
+    camera.ProcessMouseScroll((float)yoffset);
+}
+
+// --- CALLBACK на нажатие клавиш ---
+void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+    // ALT: переключить режим захвата курсора (обработка edge only)
+    if (key == GLFW_KEY_LEFT_ALT && action == GLFW_PRESS && !Input::altPressedLastFrame) {
+        InputHelpers::ToggleCursorLock(window);
+        Input::altPressedLastFrame = true;
+    }
+    if (key == GLFW_KEY_LEFT_ALT && action == GLFW_RELEASE) {
+        Input::altPressedLastFrame = false;
+    }
+
+    // ESC: либо отменить выбор модели, либо выйти
+    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
+        if (modelSelected) {
+            modelSelected = false;
+            selectedModel = nullptr;
+        }
+        else {
+            glfwSetWindowShouldClose(window, true);
+        }
+    }
+
+    // Передвижение выбранной модели по стрелкам
+    if (action == GLFW_PRESS || action == GLFW_REPEAT) {
+        InputHelpers::MoveSelectedModel(key);
+    }
+}
+
+// --- ОБРАБОТКА обычного WASD-движения камеры (вызывается в основном цикле) ---
+void processInput(GLFWwindow* window) {
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) camera.ProcessKeyboard(FORWARD, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) camera.ProcessKeyboard(BACKWARD, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) camera.ProcessKeyboard(LEFT, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) camera.ProcessKeyboard(RIGHT, deltaTime);
+}
+
+// --- CALLBACK при изменении размера окна ---
+void framebuffer_size_callback(GLFWwindow* /*window*/, int width, int height) {
+    glViewport(0, 0, width, height);
 }
