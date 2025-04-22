@@ -17,9 +17,8 @@
 
 using std::vector;
 
-// Constants
-static constexpr unsigned int SCR_WIDTH = 1600;
-static constexpr unsigned int SCR_HEIGHT = 900;
+static unsigned int SCR_WIDTH = 1600;
+static unsigned int SCR_HEIGHT = 900;
 
 // Ray structure for picking
 struct Ray {
@@ -220,11 +219,14 @@ void Application::render() {
     for (auto m : models_) m->Draw(*shader_);
 }
 
-
+//--CALLBACK-- Изменение размера окна
 void Application::onFramebufferSize(int w, int h) {
-    glViewport(0, 0, w, h);
+    SCR_WIDTH = w;
+    SCR_HEIGHT = h;
+    glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
 }
 
+//--CALLBACK-- Изменение положения курсора
 void Application::onCursorMove(double xpos, double ypos) {
     if (!cursorLocked_) return;
     if (firstMouse_) {
@@ -237,10 +239,12 @@ void Application::onCursorMove(double xpos, double ypos) {
     camera_.ProcessMouseMovement(dx, dy);
 }
 
+//--CALLBACK-- Скроллинг
 void Application::onScroll(double yoffset) {
     camera_.ProcessMouseScroll(float(yoffset));
 }
 
+//--CALLBACK-- Нажатие на клавиши клавиатуры
 void Application::onKey(int key, int, int action, int) {
     if (key == GLFW_KEY_LEFT_ALT && action == GLFW_PRESS && !altPressed_) {
         toggleCursorLock(); altPressed_ = true;
@@ -257,6 +261,7 @@ void Application::onKey(int key, int, int action, int) {
     }
 }
 
+//--CALLBACK-- Нажатие кнопок мыши
 void Application::onMouseButton(int button, int action) {
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS && !cursorLocked_) {
         double x, y; glfwGetCursorPos(window_, &x, &y);
@@ -264,6 +269,7 @@ void Application::onMouseButton(int button, int action) {
     }
 }
 
+//Генерация луча для выбора
 Ray Application::generateRay(int mouseX, int mouseY) const {
     float x = (2.0f * mouseX) / SCR_WIDTH - 1.0f;
     float y = 1.0f - (2.0f * mouseY) / SCR_HEIGHT;
@@ -274,6 +280,7 @@ Ray Application::generateRay(int mouseX, int mouseY) const {
     return { glm::vec3(nearP), glm::normalize(glm::vec3(farP - nearP)), glm::vec3(farP) };
 }
 
+//Обраотка пересечений Хитбокса(цилиндр) с лучём
 bool Application::testIntersection(const Ray& ray, const HitBox& box, float& t) const {
     glm::mat4 invModel = glm::translate(glm::mat4(1.0f), -box.position);
     glm::vec3 o = invModel * glm::vec4(ray.origin, 1.0f);
@@ -298,6 +305,7 @@ bool Application::testIntersection(const Ray& ray, const HitBox& box, float& t) 
     return hit;
 }
 
+//--Блокировка/Разблокировка курсора--
 void Application::toggleCursorLock() {
     cursorLocked_ = !cursorLocked_;
     if (cursorLocked_) {
@@ -310,6 +318,7 @@ void Application::toggleCursorLock() {
     }
 }
 
+//--Вызов функций для проверки выбора фигуры
 void Application::trySelect(double x, double y) {
     float nearest = 0;
     Ray ray = generateRay(int(x), int(y));
@@ -323,6 +332,7 @@ void Application::trySelect(double x, double y) {
     }
 }
 
+//--Движение выбранной фигуры
 void Application::moveSelected(int key) {
     if (!modelSelected_) return;
     const float speed = 0.05f;
