@@ -1,4 +1,4 @@
-#include <glad/glad.h>
+п»ї#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -15,11 +15,11 @@
 #include <vector>
 
 
-//--Переменные размера окна
+//--РџРµСЂРµРјРµРЅРЅС‹Рµ СЂР°Р·РјРµСЂР° РѕРєРЅР°
 static unsigned int SCR_WIDTH = 1600;
 static unsigned int SCR_HEIGHT = 900;
 
-//--Структура луча
+//--РЎС‚СЂСѓРєС‚СѓСЂР° Р»СѓС‡Р°
 struct Ray {
     glm::vec3 origin;
     glm::vec3 direction;
@@ -27,7 +27,7 @@ struct Ray {
 };
 
 
-//--Класс приложения
+//--РљР»Р°СЃСЃ РїСЂРёР»РѕР¶РµРЅРёСЏ
 class Application {
 public:
     Application();
@@ -87,7 +87,7 @@ private:
 //================================================
 //================================================
 // 
-//---Реализация класса
+//---Р РµР°Р»РёР·Р°С†РёСЏ РєР»Р°СЃСЃР°
 // 
 //================================================
 //================================================
@@ -105,7 +105,7 @@ Application::~Application() {
     glfwTerminate();
 }
 
-//--Основной цикл
+//--РћСЃРЅРѕРІРЅРѕР№ С†РёРєР»
 int Application::run() {
     while (!glfwWindowShouldClose(window_)) {
         double current = glfwGetTime();
@@ -122,7 +122,7 @@ int Application::run() {
     return 0;
 }
 
-//--Инициализацию нужных переменных и глобальная настройка
+//--РРЅРёС†РёР°Р»РёР·Р°С†РёСЋ РЅСѓР¶РЅС‹С… РїРµСЂРµРјРµРЅРЅС‹С… Рё РіР»РѕР±Р°Р»СЊРЅР°СЏ РЅР°СЃС‚СЂРѕР№РєР°
 bool Application::initWindow() {
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -143,7 +143,7 @@ bool Application::initWindow() {
     return true;
 }
 
-//--Установка CALLBACK's
+//--РЈСЃС‚Р°РЅРѕРІРєР° CALLBACK's
 void Application::setupCallbacks() {
     glfwSetWindowUserPointer(window_, this);
     glfwSetFramebufferSizeCallback(window_, [](GLFWwindow* w, int width, int height) {
@@ -164,20 +164,20 @@ void Application::setupCallbacks() {
     glfwSetInputMode(window_, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 }
 
-//--Загрузка ресурсов
+//--Р—Р°РіСЂСѓР·РєР° СЂРµСЃСѓСЂСЃРѕРІ
 void Application::loadResources() {
     shader_ = new Shader("../6.multiple_lights.vs", "../6.multiple_lights.fs");
 
     shader_->use();
     shader_->setFloat("material.shininess", 32.0f);
 
-    //Глобальное освещение(Солнечное)
+    //Р“Р»РѕР±Р°Р»СЊРЅРѕРµ РѕСЃРІРµС‰РµРЅРёРµ(РЎРѕР»РЅРµС‡РЅРѕРµ)
     shader_->setVec3("dirLight.direction", -0.3f, -1.0f, 0.2f);
     shader_->setVec3("dirLight.ambient", glm::vec3(0.3f));
     shader_->setVec3("dirLight.diffuse", glm::vec3(0.8f));
     shader_->setVec3("dirLight.specular", glm::vec3(0.5f));
 
-    //Локальное освещение (фонарик)
+    //Р›РѕРєР°Р»СЊРЅРѕРµ РѕСЃРІРµС‰РµРЅРёРµ (С„РѕРЅР°СЂРёРє)
     shader_->setVec3("spotLight.ambient", glm::vec3(0.0f));
     shader_->setVec3("spotLight.diffuse", glm::vec3(1.0f));
     shader_->setVec3("spotLight.specular", glm::vec3(1.0f));
@@ -194,7 +194,7 @@ void Application::loadResources() {
     models_[1]->move(glm::vec3( 5.0f, 0.0f, 0.0f ));
 }
 
-//--Передвижение камеры на WASD
+//--РџРµСЂРµРґРІРёР¶РµРЅРёРµ РєР°РјРµСЂС‹ РЅР° WASD
 void Application::processInput() {
     if (glfwGetKey(window_, GLFW_KEY_W) == GLFW_PRESS) camera_.ProcessKeyboard(FORWARD, deltaTime_);
     if (glfwGetKey(window_, GLFW_KEY_S) == GLFW_PRESS) camera_.ProcessKeyboard(BACKWARD, deltaTime_);
@@ -202,13 +202,13 @@ void Application::processInput() {
     if (glfwGetKey(window_, GLFW_KEY_D) == GLFW_PRESS) camera_.ProcessKeyboard(RIGHT, deltaTime_);
 }
 
-//--Обновление переменных на каждый кадр
+//--РћР±РЅРѕРІР»РµРЅРёРµ РїРµСЂРµРјРµРЅРЅС‹С… РЅР° РєР°Р¶РґС‹Р№ РєР°РґСЂ
 void Application::update() {
     view_ = camera_.GetViewMatrix();
     projection_ = glm::perspective(glm::radians(camera_.Zoom), float(SCR_WIDTH) / SCR_HEIGHT, 0.1f, 100.0f);
 }
 
-//--Основной редндер
+//--РћСЃРЅРѕРІРЅРѕР№ СЂРµРґРЅРґРµСЂ
 void Application::render() {
     glClearColor(0.5f, 0.55f, 0.5f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -227,14 +227,14 @@ void Application::render() {
     for (auto m : models_) m->Draw(*shader_);
 }
 
-//--CALLBACK-- Изменение размера окна
+//--CALLBACK-- РР·РјРµРЅРµРЅРёРµ СЂР°Р·РјРµСЂР° РѕРєРЅР°
 void Application::onFramebufferSize(int w, int h) {
     SCR_WIDTH = w;
     SCR_HEIGHT = h;
     glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
 }
 
-//--CALLBACK-- Изменение положения курсора
+//--CALLBACK-- РР·РјРµРЅРµРЅРёРµ РїРѕР»РѕР¶РµРЅРёСЏ РєСѓСЂСЃРѕСЂР°
 void Application::onCursorMove(double xpos, double ypos) {
     if (!cursorLocked_) return;
     if (firstMouse_) {
@@ -247,12 +247,12 @@ void Application::onCursorMove(double xpos, double ypos) {
     camera_.ProcessMouseMovement(dx, dy);
 }
 
-//--CALLBACK-- Скроллинг
+//--CALLBACK-- РЎРєСЂРѕР»Р»РёРЅРі
 void Application::onScroll(double yoffset) {
     camera_.ProcessMouseScroll(float(yoffset));
 }
 
-//--CALLBACK-- Нажатие на клавиши клавиатуры
+//--CALLBACK-- РќР°Р¶Р°С‚РёРµ РЅР° РєР»Р°РІРёС€Рё РєР»Р°РІРёР°С‚СѓСЂС‹
 void Application::onKey(int key, int, int action, int) {
     if (key == GLFW_KEY_LEFT_ALT && action == GLFW_PRESS && !altPressed_) {
         toggleCursorLock(); altPressed_ = true;
@@ -269,7 +269,7 @@ void Application::onKey(int key, int, int action, int) {
     }
 }
 
-//--CALLBACK-- Нажатие кнопок мыши
+//--CALLBACK-- РќР°Р¶Р°С‚РёРµ РєРЅРѕРїРѕРє РјС‹С€Рё
 void Application::onMouseButton(int button, int action) {
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS && !cursorLocked_) {
         double x, y; glfwGetCursorPos(window_, &x, &y);
@@ -277,7 +277,7 @@ void Application::onMouseButton(int button, int action) {
     }
 }
 
-//--Генерация луча для выбора
+//--Р“РµРЅРµСЂР°С†РёСЏ Р»СѓС‡Р° РґР»СЏ РІС‹Р±РѕСЂР°
 Ray Application::generateRay(int mouseX, int mouseY) const {
     float x = (2.0f * mouseX) / SCR_WIDTH - 1.0f;
     float y = 1.0f - (2.0f * mouseY) / SCR_HEIGHT;
@@ -288,7 +288,7 @@ Ray Application::generateRay(int mouseX, int mouseY) const {
     return { glm::vec3(nearP), glm::normalize(glm::vec3(farP - nearP)), glm::vec3(farP) };
 }
 
-//--Обраотка пересечений Хитбокса(цилиндр) с лучём
+//--РћР±СЂР°РѕС‚РєР° РїРµСЂРµСЃРµС‡РµРЅРёР№ РҐРёС‚Р±РѕРєСЃР°(С†РёР»РёРЅРґСЂ) СЃ Р»СѓС‡С‘Рј
 bool Application::testIntersection(const Ray& ray, const HitBox& box, float& t) const {
     glm::mat4 invModel = glm::translate(glm::mat4(1.0f), -box.position);
     glm::vec3 o = invModel * glm::vec4(ray.origin, 1.0f);
@@ -313,7 +313,7 @@ bool Application::testIntersection(const Ray& ray, const HitBox& box, float& t) 
     return hit;
 }
 
-//--Блокировка/Разблокировка курсора--
+//--Р‘Р»РѕРєРёСЂРѕРІРєР°/Р Р°Р·Р±Р»РѕРєРёСЂРѕРІРєР° РєСѓСЂСЃРѕСЂР°--
 void Application::toggleCursorLock() {
     cursorLocked_ = !cursorLocked_;
     if (cursorLocked_) {
@@ -326,7 +326,7 @@ void Application::toggleCursorLock() {
     }
 }
 
-//--Вызов функций для проверки выбора фигуры
+//--Р’С‹Р·РѕРІ С„СѓРЅРєС†РёР№ РґР»СЏ РїСЂРѕРІРµСЂРєРё РІС‹Р±РѕСЂР° С„РёРіСѓСЂС‹
 void Application::trySelect(double x, double y) {
     float nearest = 0;
     Ray ray = generateRay(int(x), int(y));
@@ -340,7 +340,7 @@ void Application::trySelect(double x, double y) {
     }
 }
 
-//--Движение выбранной фигуры
+//--Р”РІРёР¶РµРЅРёРµ РІС‹Р±СЂР°РЅРЅРѕР№ С„РёРіСѓСЂС‹
 void Application::moveSelected(int key) {
     if (!modelSelected_) return;
     const float speed = 0.05f;
