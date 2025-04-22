@@ -168,7 +168,10 @@
     <Image Include="..\resources\objects\shashka v4\DefaultMaterial_BaseColor.png" />
   </ItemGroup>
   <ItemGroup>
-    <Object Include="..\resources\objects\shashka v4\shashka v4.obj" />
+    <Text Include="..\resources\objects\shashka v4\shashka v4.obj">
+      <DeploymentContent>false</DeploymentContent>
+      <FileType>Document</FileType>
+    </Text>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

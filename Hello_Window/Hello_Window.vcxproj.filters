@@ -50,8 +50,8 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <Object Include="..\resources\objects\shashka v4\shashka v4.obj">
+    <Text Include="..\resources\objects\shashka v4\shashka v4.obj">
       <Filter>Файлы ресурсов</Filter>
-    </Object>
+    </Text>
   </ItemGroup>
 </Project>
