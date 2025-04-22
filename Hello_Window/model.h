@@ -23,18 +23,17 @@ using namespace std;
 
 unsigned int TextureFromFile(const char *path, const string &directory, bool gamma = false);
 
-struct BoundingBox {
+struct HitBox {
     glm::vec3 position; // Центр основания цилиндра
     float radius;
     float height;
 };
-BoundingBox calculateAABB(const aiScene* scene);
 
 class Model 
 {
 public:
     // Данные модели 
-    BoundingBox checkBox;
+    HitBox checkBox;
     glm::vec3 position;
     vector<Texture> textures_loaded; // (оптимизация) сохраняем все загруженные текстуры, чтобы убедиться, что они не загружены более одного раза
     vector<Mesh> meshes;
@@ -55,6 +54,7 @@ public:
         for(unsigned int i = 0; i < meshes.size(); i++)
             meshes[i].Draw(shader);
     }
+
     void move(glm::vec3 direction) {
         position += direction;
         checkBox.position += direction;
@@ -66,7 +66,6 @@ private:
         // Чтение файла с помощью Assimp
         Assimp::Importer importer;
         const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
-        checkBox = calculateAABB(scene);
         // Проверка на ошибки
         if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) // если НЕ 0
         {
@@ -79,6 +78,9 @@ private:
 
         // Рекурсивная обработка корневого узла Assimp
         processNode(scene->mRootNode, scene);
+
+        //Генерацию Хит-бокса исходя из модели (цилиндрическая)
+        checkBox = generateHitBox();
     }
 
     // Рекурсивная обработка узла. Обрабатываем каждый отдельный меш, расположенный в узле, и повторяем этот процесс для своих дочерних углов (если таковы вообще имеются)
@@ -98,6 +100,47 @@ private:
             processNode(node->mChildren[i], scene);
         }
 
+    }
+
+    HitBox generateHitBox() {
+        HitBox hitbox;
+        glm::vec3 min(FLT_MAX, FLT_MAX, FLT_MAX);
+        glm::vec3 max(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+
+        // Обходим все меши в сцене/
+        for (const auto mesh : meshes) {
+            //const aiMesh* mesh = scene->mMeshes[m];
+
+            // Обходим все вершины меша
+            for (const auto& vertex : mesh.vertices) {
+
+                // Обновляем минимальные и максимальные значения
+                min.x = std::min(min.x, vertex.Position.x);
+                min.y = std::min(min.y, vertex.Position.y);
+                min.z = std::min(min.z, vertex.Position.z);
+
+                max.x = std::max(max.x, vertex.Position.x);
+                max.y = std::max(max.y, vertex.Position.y);
+                max.z = std::max(max.z, vertex.Position.z);
+            }
+        }
+
+        // Вычисляем радиус как максимальное расстояние по XZ-плоскости
+        float extentX = (max.x - min.x) / 2.0f;
+        float extentZ = (max.z - min.z) / 2.0f;
+        hitbox.radius = std::max(extentX, extentZ);
+
+        // Вычисляем высоту
+        hitbox.height = max.y - min.y;
+
+        // Центр основания цилиндра 
+        hitbox.position = glm::vec3(
+            (min.x + max.x) / 2.0f,
+            min.y,
+            (min.z + max.z) / 2.0f
+        );
+
+        return hitbox;
     }
 
     Mesh processMesh(aiMesh *mesh, const aiScene *scene)
@@ -267,46 +310,6 @@ unsigned int TextureFromFile(const char *path, const string &directory, bool gam
     return textureID;
 }
 
-BoundingBox calculateAABB(const aiScene* scene) {
-    BoundingBox hitbox;
-    aiVector3D min(FLT_MAX, FLT_MAX, FLT_MAX);
-    aiVector3D max(-FLT_MAX, -FLT_MAX, -FLT_MAX);
 
-    // Обходим все меши в сцене
-    for (unsigned int m = 0; m < scene->mNumMeshes; m++) {
-        const aiMesh* mesh = scene->mMeshes[m];
-
-        // Обходим все вершины меша
-        for (unsigned int v = 0; v < mesh->mNumVertices; v++) {
-            const aiVector3D& vertex = mesh->mVertices[v];
-
-            // Обновляем минимальные и максимальные значения
-            min.x = std::min(min.x, vertex.x);
-            min.y = std::min(min.y, vertex.y);
-            min.z = std::min(min.z, vertex.z);
-
-            max.x = std::max(max.x, vertex.x);
-            max.y = std::max(max.y, vertex.y);
-            max.z = std::max(max.z, vertex.z);
-        }
-    }
-
-    // Вычисляем радиус как максимальное расстояние по XZ-плоскости
-    float extentX = (max.x - min.x) / 2.0f;
-    float extentZ = (max.z - min.z) / 2.0f;
-    hitbox.radius = std::max(extentX, extentZ);
-
-    // Вычисляем высоту
-    hitbox.height = max.y - min.y;
-
-    // Центр основания цилиндра (предполагаем, что основание внизу)
-    hitbox.position = glm::vec3(
-        (min.x + max.x) / 2.0f,
-        min.y,
-        (min.z + max.z) / 2.0f
-    );
-
-    return hitbox;
-}
 #endif
 
