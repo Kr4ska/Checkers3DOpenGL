@@ -37,8 +37,8 @@ public:
 private:
     // Window and timing
     GLFWwindow* window_ = nullptr;
-    float deltaTime_ = 0.0f;
-    float lastFrame_ = 0.0f;
+    double deltaTime_ = 0.0f;
+    double lastFrame_ = 0.0f;
 
     // Camera & view/projection
     Camera camera_{ glm::vec3(0.0f, 0.0f, 3.0f) };
@@ -61,7 +61,6 @@ private:
 
     // Initialization helpers
     bool initWindow();
-    bool initGL();
     void setupCallbacks();
     void loadResources();
 
@@ -88,19 +87,21 @@ private:
 // Implementations
 
 Application::Application() {
-    if (!initWindow() || !initGL()) std::exit(EXIT_FAILURE);
+    if (!initWindow()) std::exit(EXIT_FAILURE);
     setupCallbacks();
     loadResources();
-}
+} 
 
 Application::~Application() {
     delete shader_;
+    delete selectedModel_;
     glfwTerminate();
 }
 
+//Основной цикл
 int Application::run() {
     while (!glfwWindowShouldClose(window_)) {
-        float current = static_cast<float>(glfwGetTime());
+        double current = glfwGetTime();
         deltaTime_ = current - lastFrame_;
         lastFrame_ = current;
 
@@ -114,6 +115,7 @@ int Application::run() {
     return 0;
 }
 
+//Инициализацию нужных переменных и глобальная настройка
 bool Application::initWindow() {
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -123,23 +125,22 @@ bool Application::initWindow() {
     window_ = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Refactored OpenGL", nullptr, nullptr);
     if (!window_) { std::cerr << "GLFW window creation failed\n"; return false; }
     glfwMakeContextCurrent(window_);
-    return true;
-}
 
-bool Application::initGL() {
     if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress))) {
         std::cerr << "Failed to initialize GLAD\n";
         return false;
     }
     stbi_set_flip_vertically_on_load(true);
     glEnable(GL_DEPTH_TEST);
+
     return true;
 }
 
+//Установка CALLBACK's
 void Application::setupCallbacks() {
     glfwSetWindowUserPointer(window_, this);
     glfwSetFramebufferSizeCallback(window_, [](GLFWwindow* w, int width, int height) {
-        static_cast<Application*>(glfwGetWindowUserPointer(w))->onFramebufferSize(width, height);
+        static_cast<Application*>(glfwGetWindowUserPointer(w))->onFramebufferSize(width, height); 
         });
     glfwSetCursorPosCallback(window_, [](GLFWwindow* w, double x, double y) {
         static_cast<Application*>(glfwGetWindowUserPointer(w))->onCursorMove(x, y);
@@ -156,43 +157,20 @@ void Application::setupCallbacks() {
     glfwSetInputMode(window_, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 }
 
+//Загрузка ресурсов
 void Application::loadResources() {
     shader_ = new Shader("../6.multiple_lights.vs", "../6.multiple_lights.fs");
-    models_.push_back(new Model("../resources/objects/shashka v4/shashka v4.obj"));
-    models_.push_back(new Model("../resources/objects/shashka v4/shashka v4.obj"));
-    models_[1]->move({ 5.0f, 0.0f, 0.0f });
-}
-
-void Application::processInput() {
-    if (glfwGetKey(window_, GLFW_KEY_W) == GLFW_PRESS) camera_.ProcessKeyboard(FORWARD, deltaTime_);
-    if (glfwGetKey(window_, GLFW_KEY_S) == GLFW_PRESS) camera_.ProcessKeyboard(BACKWARD, deltaTime_);
-    if (glfwGetKey(window_, GLFW_KEY_A) == GLFW_PRESS) camera_.ProcessKeyboard(LEFT, deltaTime_);
-    if (glfwGetKey(window_, GLFW_KEY_D) == GLFW_PRESS) camera_.ProcessKeyboard(RIGHT, deltaTime_);
-}
-
-void Application::update() {
-    view_ = camera_.GetViewMatrix();
-    projection_ = glm::perspective(glm::radians(camera_.Zoom), float(SCR_WIDTH) / SCR_HEIGHT, 0.1f, 100.0f);
-}
-
-void Application::render() {
-    glClearColor(0.5f, 0.55f, 0.5f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     shader_->use();
-    shader_->setVec3("viewPos", camera_.Position);
     shader_->setFloat("material.shininess", 32.0f);
-    // lights setup omitted
-    shader_->setMat4("view", view_);
-    shader_->setMat4("projection", projection_);
 
-    shader_->setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
-    shader_->setVec3("dirLight.ambient", glm::vec3(0.05f));
-    shader_->setVec3("dirLight.diffuse", glm::vec3(0.4f));
+    //Глобальное освещение(Солнечное)
+    shader_->setVec3("dirLight.direction", -0.3f, -1.0f, 0.2f);
+    shader_->setVec3("dirLight.ambient", glm::vec3(0.3f));
+    shader_->setVec3("dirLight.diffuse", glm::vec3(0.8f));
     shader_->setVec3("dirLight.specular", glm::vec3(0.5f));
 
-    shader_->setVec3("spotLight.position", camera_.Position);
-    shader_->setVec3("spotLight.direction", camera_.Front);
+    //Локальное освещение (фонарик)
     shader_->setVec3("spotLight.ambient", glm::vec3(0.0f));
     shader_->setVec3("spotLight.diffuse", glm::vec3(1.0f));
     shader_->setVec3("spotLight.specular", glm::vec3(1.0f));
@@ -201,9 +179,47 @@ void Application::render() {
     shader_->setFloat("spotLight.quadratic", 0.032f);
     shader_->setFloat("spotLight.cutOff", glm::cos(glm::radians(12.5f)));
     shader_->setFloat("spotLight.outerCutOff", glm::cos(glm::radians(15.0f)));
+    
+
+    models_.push_back(new Model("../resources/objects/shashka v4/shashka v4.obj"));
+    models_.push_back(new Model("../resources/objects/shashka v4/shashka v4.obj"));
+
+    models_[1]->move(glm::vec3( 5.0f, 0.0f, 0.0f ));
+}
+
+//Передвижение камеры на WASD
+void Application::processInput() {
+    if (glfwGetKey(window_, GLFW_KEY_W) == GLFW_PRESS) camera_.ProcessKeyboard(FORWARD, deltaTime_);
+    if (glfwGetKey(window_, GLFW_KEY_S) == GLFW_PRESS) camera_.ProcessKeyboard(BACKWARD, deltaTime_);
+    if (glfwGetKey(window_, GLFW_KEY_A) == GLFW_PRESS) camera_.ProcessKeyboard(LEFT, deltaTime_);
+    if (glfwGetKey(window_, GLFW_KEY_D) == GLFW_PRESS) camera_.ProcessKeyboard(RIGHT, deltaTime_);
+}
+
+//Обновление переменных на каждый кадр
+void Application::update() {
+    view_ = camera_.GetViewMatrix();
+    projection_ = glm::perspective(glm::radians(camera_.Zoom), float(SCR_WIDTH) / SCR_HEIGHT, 0.1f, 100.0f);
+}
+
+//Основной редндер
+void Application::render() {
+    glClearColor(0.5f, 0.55f, 0.5f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    shader_->use();
+    shader_->setVec3("viewPos", camera_.Position);
+
+    // lights setup omitted
+    shader_->setMat4("view", view_);
+    shader_->setMat4("projection", projection_);
+
+    shader_->setVec3("spotLight.position", camera_.Position);
+    shader_->setVec3("spotLight.direction", camera_.Front);
+
 
     for (auto m : models_) m->Draw(*shader_);
 }
+
 
 void Application::onFramebufferSize(int w, int h) {
     glViewport(0, 0, w, h);

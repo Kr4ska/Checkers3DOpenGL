@@ -51,8 +51,7 @@ void main()
     
     // Этап №1: Направленное освещение
     vec3 result = CalcDirLight(dirLight, norm, viewDir); 
-		
-    // Этап №3: Прожектор
+    // Этап №2: Прожектор
     result += CalcSpotLight(spotLight, norm, FragPos, viewDir);    
     
     FragColor = vec4(result, 1.0);
