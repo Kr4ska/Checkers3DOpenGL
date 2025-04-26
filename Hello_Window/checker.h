@@ -29,3 +29,5 @@ Checker::Checker(std::string name_, Model model_, glm::vec3 position_ = { 0.0f, 
 Checker::~Checker()
 {
 }
+void Checker::setKing() { king = true; }
+bool Checker::getKing() { return king; }

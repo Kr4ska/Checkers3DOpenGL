@@ -10,6 +10,7 @@
 #include "model.h"
 #include "checker.h"
 #include "Object.h"
+#include "CheckerBoard.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -52,6 +53,7 @@ private:
     bool firstMouse_ = true;
 
     // Selection & input state
+    CheckersBoard* board;
     std::vector<Object*> objects_;
     Object* selectedObject_ = nullptr;
     bool modelSelected_ = false;
@@ -84,7 +86,7 @@ private:
     Ray generateRay(int x, int y) const;
     bool testIntersection(const Ray& ray, const HitBox& box, float& t) const;
     void toggleCursorLock();
-    void trySelect(double x, double y);
+    bool screenToBoardCoords(double mx, double my, int& outR, int& outC);
     void moveSelected(int key);
     void printSelected() const;
 };
@@ -194,24 +196,28 @@ void Application::loadResources() {
     
     //Белые шашки
     Model white_checker("../resources/objects/checker_white/shashka v4.obj");
-    for (float i = 0; i < 3; i++) {//высота
-        for (float j = 0; j < 4; j++) {//ширина
-            objects_.push_back(new Checker("white " + static_cast<int>(i), 
-                white_checker, 
-                { (2.0f /*Размер клетки*/) * (j + (static_cast<int>(i) % 2) / 2.0f) * 2 , 0.0f, ((2.0f) * i)}));
-        }
-    }
+    //for (float i = 0; i < 3; i++) {//высота
+    //    for (float j = 0; j < 4; j++) {//ширина
+    //        objects_.push_back(new Checker("white " + static_cast<int>(i), 
+    //            white_checker, 
+    //            { (2.0f /*Размер клетки*/) * (j + (static_cast<int>(i) % 2) / 2.0f) * 2 , 0.0f, ((2.0f) * i)}));
+    //    }
+    //}
 
     //Черные шашки
     Model black_checker("../resources/objects/checker_black/shashka v4.obj");
-    for (float i = 0; i < 3; i++) {//высота
-        for (float j = 0; j < 4; j++) {//ширина
-            objects_.push_back(new Checker("black " + static_cast<int>(i),
-                black_checker,
-                { (2.0f) * (j + !(bool)(static_cast<int>(i) % 2) / 2.0f) * 2 , 0.0f, ((2.0f) * i) + 5.0f * 2 }));
-        }
-    }
-
+    //for (float i = 0; i < 3; i++) {//высота
+    //    for (float j = 0; j < 4; j++) {//ширина
+    //        objects_.push_back(new Checker("black " + static_cast<int>(i),
+    //            black_checker,
+    //            { (2.0f) * (j + !(bool)(static_cast<int>(i) % 2) / 2.0f) * 2 , 0.0f, ((2.0f) * i) + 5.0f * 2 }));
+    //    }
+    //}
+    Model hlM("../resources/objects/highlight/miniaturebase_20151113-3515-1ii3b67-0.stl");
+    board = new CheckersBoard(
+        white_checker, black_checker, hlM,
+        glm::vec3(-7.0f, 0.1f, -7.0f), // adjust to match your grid spacing
+        2.0f, 0.1f);
 }
 
 //--Передвижение камеры на WASD
@@ -244,7 +250,7 @@ void Application::render() {
     shader_->setVec3("spotLight.direction", camera_.Front);
 
 
-    for (auto m : objects_) m->model.Draw(*shader_);
+    board->render(*shader_);
 }
 
 //==================================================================================================
@@ -314,7 +320,8 @@ void Application::onKey(int key, int, int action, int) {
 void Application::onMouseButton(int button, int action) {
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS && !cursorLocked_) {
         double x, y; glfwGetCursorPos(window_, &x, &y);
-        trySelect(x, y);
+        int row, col;
+        if (screenToBoardCoords(x, y, row, col)) board->onCellClick(row, col);
     }
 }
 
@@ -370,17 +377,20 @@ void Application::toggleCursorLock() {
 }
 
 //--Вызов функций для проверки выбора фигуры
-void Application::trySelect(double x, double y) {
-    float nearest = 0;
-    Ray ray = generateRay(int(x), int(y));
-    for (auto m : objects_) {
-        float t;
-        if (testIntersection(ray, m->model.checkBox, t)) {
-            selectedObject_ = m;
-            modelSelected_ = true;
-            return;
-        }
-    }
+bool Application::screenToBoardCoords(double mx, double my, int& outR, int& outC) {
+    Ray ray = generateRay(int(mx), int(my));
+    // Plane at y = board height
+    float t;
+    glm::vec4 planeNormal(0, 1, 0, 0);
+    // Intersection with plane y = origin.y
+    t = (board->origin.y - ray.origin.y) / ray.direction.y;
+    if (t < 0) return false;
+    glm::vec3 p = ray.origin + ray.direction * t;
+    float localX = p.x - board->origin.x;
+    float localZ = p.z - board->origin.z;
+    outC = int(floor(localX / board->cellSize));
+    outR = int(floor(localZ / board->cellSize));
+    return outR >= 0 && outR < CheckersBoard::SIZE && outC >= 0 && outC < CheckersBoard::SIZE;
 }
 
 //--Движение выбранной фигуры

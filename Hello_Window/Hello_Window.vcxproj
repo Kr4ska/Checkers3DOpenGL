@@ -156,6 +156,7 @@
   <ItemGroup>
     <ClInclude Include="camera.h" />
     <ClInclude Include="checker.h" />
+    <ClInclude Include="CheckerBoard.h" />
     <ClInclude Include="mesh.h" />
     <ClInclude Include="model.h" />
     <ClInclude Include="Object.h" />
