@@ -8,6 +8,9 @@
 #include "shader.h"
 #include "camera.h"
 #include "model.h"
+#include "checker.h"
+#include "Object.h"
+
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
@@ -41,7 +44,7 @@ private:
     double lastFrame_ = 0.0f;
 
     // Camera & view/projection
-    Camera camera_{ glm::vec3(0.0f, 0.0f, 3.0f) };
+    Camera camera_{ glm::vec3(0.0f, 10.0f, 3.0f) };
     glm::mat4 projection_;
     glm::mat4 view_;
     float lastX_ = SCR_WIDTH / 2.0f;
@@ -49,8 +52,8 @@ private:
     bool firstMouse_ = true;
 
     // Selection & input state
-    std::vector<Model*> models_;
-    Model* selectedModel_ = nullptr;
+    std::vector<Object*> objects_;
+    Object* selectedObject_ = nullptr;
     bool modelSelected_ = false;
     bool cursorLocked_ = true;
     bool altPressed_ = false;
@@ -76,12 +79,14 @@ private:
     void onKey(int key, int scancode, int action, int mods);
     void onMouseButton(int button, int action);
 
+
     // Helpers
     Ray generateRay(int x, int y) const;
     bool testIntersection(const Ray& ray, const HitBox& box, float& t) const;
     void toggleCursorLock();
     void trySelect(double x, double y);
     void moveSelected(int key);
+    void printSelected() const;
 };
 
 //================================================
@@ -101,7 +106,7 @@ Application::Application() {
 
 Application::~Application() {
     delete shader_;
-    delete selectedModel_;
+    delete selectedObject_;
     glfwTerminate();
 }
 
@@ -187,11 +192,26 @@ void Application::loadResources() {
     shader_->setFloat("spotLight.cutOff", glm::cos(glm::radians(12.5f)));
     shader_->setFloat("spotLight.outerCutOff", glm::cos(glm::radians(15.0f)));
     
+    //Белые шашки
+    Model white_checker("../resources/objects/checker_white/shashka v4.obj");
+    for (float i = 0; i < 3; i++) {//высота
+        for (float j = 0; j < 4; j++) {//ширина
+            objects_.push_back(new Checker("white " + static_cast<int>(i), 
+                white_checker, 
+                { (2.0f /*Размер клетки*/) * (j + (static_cast<int>(i) % 2) / 2.0f) * 2 , 0.0f, ((2.0f) * i)}));
+        }
+    }
 
-    models_.push_back(new Model("../resources/objects/shashka v4/shashka v4.obj"));
-    models_.push_back(new Model("../resources/objects/shashka v4/shashka v4.obj"));
+    //Черные шашки
+    Model black_checker("../resources/objects/checker_black/shashka v4.obj");
+    for (float i = 0; i < 3; i++) {//высота
+        for (float j = 0; j < 4; j++) {//ширина
+            objects_.push_back(new Checker("black " + static_cast<int>(i),
+                black_checker,
+                { (2.0f) * (j + !(bool)(static_cast<int>(i) % 2) / 2.0f) * 2 , 0.0f, ((2.0f) * i) + 5.0f * 2 }));
+        }
+    }
 
-    models_[1]->move(glm::vec3( 5.0f, 0.0f, 0.0f ));
 }
 
 //--Передвижение камеры на WASD
@@ -208,7 +228,7 @@ void Application::update() {
     projection_ = glm::perspective(glm::radians(camera_.Zoom), float(SCR_WIDTH) / SCR_HEIGHT, 0.1f, 100.0f);
 }
 
-//--Основной редндер
+//--Основной рендер
 void Application::render() {
     glClearColor(0.5f, 0.55f, 0.5f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -224,8 +244,10 @@ void Application::render() {
     shader_->setVec3("spotLight.direction", camera_.Front);
 
 
-    for (auto m : models_) m->Draw(*shader_);
+    for (auto m : objects_) m->model.Draw(*shader_);
 }
+
+//==================================================================================================
 
 //--CALLBACK-- Изменение размера окна
 void Application::onFramebufferSize(int w, int h) {
@@ -254,18 +276,37 @@ void Application::onScroll(double yoffset) {
 
 //--CALLBACK-- Нажатие на клавиши клавиатуры
 void Application::onKey(int key, int, int action, int) {
-    if (key == GLFW_KEY_LEFT_ALT && action == GLFW_PRESS && !altPressed_) {
-        toggleCursorLock(); altPressed_ = true;
-    }
-    if (key == GLFW_KEY_LEFT_ALT && action == GLFW_RELEASE) altPressed_ = false;
+    if (action == GLFW_PRESS)
+    {
+        switch (key) {
+            case GLFW_KEY_LEFT_ALT://Left ALT
+                toggleCursorLock(); altPressed_ = true;
+                break;
 
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
-        if (modelSelected_) { modelSelected_ = false; selectedModel_ = nullptr; }
-        else glfwSetWindowShouldClose(window_, true);
+            case GLFW_KEY_ESCAPE: // Escape
+                if (modelSelected_) {
+                    modelSelected_ = false; selectedObject_ = nullptr;
+                }
+                else
+                    glfwSetWindowShouldClose(window_, true);
+                break;
+
+            case GLFW_KEY_LEFT: case GLFW_KEY_RIGHT: case GLFW_KEY_UP: case GLFW_KEY_DOWN: case GLFW_KEY_SPACE: case GLFW_KEY_LEFT_CONTROL: //Стрелки && Пробел && CTRL
+                moveSelected(key);
+                break;
+                
+            case GLFW_KEY_ENTER:
+                printSelected();
+                break;
+        }
     }
-    if ((action == GLFW_PRESS) &&
-        (key == GLFW_KEY_LEFT || key == GLFW_KEY_RIGHT || key == GLFW_KEY_UP || key == GLFW_KEY_DOWN)) {
-        moveSelected(key);
+
+    if (action == GLFW_RELEASE) {
+        switch (key) {
+            case GLFW_KEY_LEFT_ALT:
+                altPressed_ = false;
+                break;
+        }
     }
 }
 
@@ -276,6 +317,8 @@ void Application::onMouseButton(int button, int action) {
         trySelect(x, y);
     }
 }
+
+//====================================================================================================
 
 //--Генерация луча для выбора
 Ray Application::generateRay(int mouseX, int mouseY) const {
@@ -288,7 +331,7 @@ Ray Application::generateRay(int mouseX, int mouseY) const {
     return { glm::vec3(nearP), glm::normalize(glm::vec3(farP - nearP)), glm::vec3(farP) };
 }
 
-//--Обраотка пересечений Хитбокса(цилиндр) с лучём
+//--Обработка пересечений Хитбокса(цилиндр) с лучём
 bool Application::testIntersection(const Ray& ray, const HitBox& box, float& t) const {
     glm::mat4 invModel = glm::translate(glm::mat4(1.0f), -box.position);
     glm::vec3 o = invModel * glm::vec4(ray.origin, 1.0f);
@@ -330,10 +373,10 @@ void Application::toggleCursorLock() {
 void Application::trySelect(double x, double y) {
     float nearest = 0;
     Ray ray = generateRay(int(x), int(y));
-    for (auto m : models_) {
+    for (auto m : objects_) {
         float t;
-        if (testIntersection(ray, m->checkBox, t)) {
-            selectedModel_ = m;
+        if (testIntersection(ray, m->model.checkBox, t)) {
+            selectedObject_ = m;
             modelSelected_ = true;
             return;
         }
@@ -343,16 +386,24 @@ void Application::trySelect(double x, double y) {
 //--Движение выбранной фигуры
 void Application::moveSelected(int key) {
     if (!modelSelected_) return;
-    const float speed = 0.05f;
+    const float speed = 2.0f;
     glm::vec3 d(0.0f);
     switch (key) {
     case GLFW_KEY_UP:    d.z = -speed; break;
     case GLFW_KEY_DOWN:  d.z = speed; break;
     case GLFW_KEY_LEFT:  d.x = -speed; break;
     case GLFW_KEY_RIGHT: d.x = speed; break;
+    case GLFW_KEY_SPACE: d.y = speed; break;
+    case GLFW_KEY_LEFT_CONTROL: d.y = -speed; break;
     default: return;
     }
-    selectedModel_->move(d);
+    selectedObject_->move(d);
+}
+
+//Вывод координат выбранной модели
+void Application::printSelected() const{
+    std::cout << selectedObject_->position.x << " " << selectedObject_->position.y << " " << selectedObject_->position.z << std::endl;
+    return;
 }
 
 int main() {

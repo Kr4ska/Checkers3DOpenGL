@@ -155,22 +155,30 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="camera.h" />
+    <ClInclude Include="checker.h" />
     <ClInclude Include="mesh.h" />
     <ClInclude Include="model.h" />
+    <ClInclude Include="Object.h" />
     <ClInclude Include="shader.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\6.light_cube.fs" />
     <None Include="..\6.light_cube.vs" />
-    <None Include="..\resources\objects\shashka v4\shashka v4.mtl" />
+    <None Include="..\resources\objects\checker_black\shashka v4.mtl" />
+    <None Include="..\resources\objects\checker_white\shashka v4.mtl" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="..\resources\objects\shashka v4\DefaultMaterial_BaseColor.png" />
+    <Image Include="..\resources\objects\checker_black\DefaultMaterial_BaseColor.png" />
+    <Image Include="..\resources\objects\checker_white\DefaultMaterial_BaseColor.png" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="..\resources\objects\shashka v4\shashka v4.obj">
-      <DeploymentContent>false</DeploymentContent>
-      <FileType>Document</FileType>
+    <Text Include="..\resources\objects\checker_white\shashka v4.obj">
+      <FileType>Text</FileType>
+    </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\resources\objects\checker_black\shashka v4.obj">
+      <FileType>Text</FileType>
     </Text>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
