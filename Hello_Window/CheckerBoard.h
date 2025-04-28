@@ -84,7 +84,11 @@ void CheckersBoard::onCellClick(int row, int col) {
     }
     // select new
     clearHighlights();
-    if (!isInside(row, col) || !board[row][col]) { selectedChecker = nullptr; return; }
+    if (!isInside(row, col) || !board[row][col]) { 
+        std::cout << "error choose\n";
+        selectedChecker = nullptr;
+        return; 
+    }
     selectedChecker = board[row][col];
     selectedRow = row; selectedCol = col;
     for (auto m : calculateMoves(row, col)) {

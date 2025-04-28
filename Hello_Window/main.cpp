@@ -213,11 +213,15 @@ void Application::loadResources() {
     //            { (2.0f) * (j + !(bool)(static_cast<int>(i) % 2) / 2.0f) * 2 , 0.0f, ((2.0f) * i) + 5.0f * 2 }));
     //    }
     //}
-    Model hlM("../resources/objects/highlight/miniaturebase_20151113-3515-1ii3b67-0.stl");
+    Model hlM("../resources/objects/highlight/info.obj");
+    
+    objects_.push_back(new Object ("info", hlM, { 3.0f, 3.0f, 3.0f }));
+    //objects_[0]->model.scale
     board = new CheckersBoard(
         white_checker, black_checker, hlM,
         glm::vec3(-7.0f, 0.1f, -7.0f), // adjust to match your grid spacing
         2.0f, 0.1f);
+    hlM.move({ 3.0,3.0,3.0 });    
 }
 
 //--Передвижение камеры на WASD
@@ -249,7 +253,7 @@ void Application::render() {
     shader_->setVec3("spotLight.position", camera_.Position);
     shader_->setVec3("spotLight.direction", camera_.Front);
 
-
+    objects_[0]->model.Draw(*shader_);
     board->render(*shader_);
 }
 
