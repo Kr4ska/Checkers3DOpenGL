@@ -383,18 +383,24 @@ void Application::toggleCursorLock() {
 //--Вызов функций для проверки выбора фигуры
 bool Application::screenToBoardCoords(double mx, double my, int& outR, int& outC) {
     Ray ray = generateRay(int(mx), int(my));
-    // Plane at y = board height
-    float t;
-    glm::vec4 planeNormal(0, 1, 0, 0);
-    // Intersection with plane y = origin.y
-    t = (board->origin.y - ray.origin.y) / ray.direction.y;
+
+    // 1. Пересечение с плоскостью доски с учетом высоты
+    float t = (board->origin.y + board->height - ray.origin.y) / ray.direction.y;
     if (t < 0) return false;
+
+    // 2. Вычисление точки пересечения
     glm::vec3 p = ray.origin + ray.direction * t;
+
+    // 3. Коррекция координат с учетом центра клетки
     float localX = p.x - board->origin.x;
     float localZ = p.z - board->origin.z;
-    outC = int(floor(localX / board->cellSize));
-    outR = int(floor(localZ / board->cellSize));
-    return outR >= 0 && outR < CheckersBoard::SIZE && outC >= 0 && outC < CheckersBoard::SIZE;
+
+    // 4. Учет размера клетки и центрирование
+    outC = static_cast<int>((localX + board->cellSize * 0.5f) / board->cellSize);
+    outR = static_cast<int>((localZ + board->cellSize * 0.5f) / board->cellSize);
+
+    // 5. Проверка границ доски
+    return (outR >= 0 && outR < CheckersBoard::SIZE && outC >= 0 && outC < CheckersBoard::SIZE);
 }
 
 //--Движение выбранной фигуры
@@ -421,6 +427,7 @@ void Application::printSelected() const{
 }
 
 int main() {
+    setlocale(LC_ALL, "ru_RU");
     Application app;
     return app.run();
 }

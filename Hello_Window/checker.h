@@ -14,6 +14,7 @@ public:
 
 	void setKing();
 	bool getKing();
+	bool isWhite() const { return name.find("White") != std::string::npos; }
 
 private:
 	bool king;
