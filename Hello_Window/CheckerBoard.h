@@ -41,6 +41,7 @@ private:
     bool checkPath(int r1, int c1, int r2, int c2) const;
     void clearHighlights();
     std::vector<std::pair<int, int>> calculateMoves(int row, int col) const;
+    bool hasCaptures(Player player) const;
     bool isInside(int r, int c) const { return r >= 0 && r < SIZE && c >= 0 && c < SIZE; }
     glm::vec3 cellPosition(int row, int col) const {
         return origin + glm::vec3(col * cellSize, height, row * cellSize);
@@ -77,25 +78,52 @@ CheckersBoard::~CheckersBoard() {
     clearHighlights();
 }
 
+bool CheckersBoard::hasCaptures(Player player) const {
+    for (int r = 0; r < SIZE; ++r) {
+        for (int c = 0; c < SIZE; ++c) {
+            Checker* checker = board[r][c];
+            if (checker && ((player == Player::WHITE && checker->isWhite()) ||
+                (player == Player::BLACK && !checker->isWhite()))) {
+                auto moves = calculateMoves(r, c);
+                for (const auto& move : moves) {
+                    if (abs(move.first - r) > 1 || abs(move.second - c) > 1) {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+    return false;
+}
+
 void CheckersBoard::onCellClick(int row, int col) {
     if (!isInside(row, col)) return;
 
     Checker* clickedChecker = board[row][col];
     bool moveProcessed = false;
+    bool mustCapture = hasCaptures(currentPlayer);
 
-    // ─── Блок выбора шашки ────────────────────────────────────────────────
+    // Блок выбора шашки
     if (clickedChecker && !selectedChecker) {
-        // Проверка принадлежности шашки текущему игроку
         if ((currentPlayer == Player::WHITE && clickedChecker->isWhite()) ||
             (currentPlayer == Player::BLACK && !clickedChecker->isWhite())) {
+
+            auto moves = calculateMoves(row, col);
+            bool hasJump = std::any_of(moves.begin(), moves.end(), [row, col](const auto& m) {
+                return abs(m.first - row) > 1 || abs(m.second - col) > 1;
+                });
+
+            // Если есть обязательные взятия, но у шашки их нет - блокируем выбор
+            if (mustCapture && !hasJump) {
+                std::cout << "Вы должны выбрать шашку с возможностью взятия!\n";
+                return;
+            }
 
             clearHighlights();
             selectedChecker = clickedChecker;
             selectedRow = row;
             selectedCol = col;
 
-            // Получение и подсветка доступных ходов
-            auto moves = calculateMoves(row, col);
             for (const auto& m : moves) {
                 highlights.push_back(new Object(
                     "Highlight",
@@ -125,6 +153,11 @@ void CheckersBoard::onCellClick(int row, int col) {
         }
 
         if (validMove) {
+            // Проверка на обязательное взятие
+            if (mustCapture && !isJumpMove) {
+                std::cout << "Вы должны совершить взятие!\n";
+                return;
+            }
             // Обработка прыжка и захвата шашек
             if (isJumpMove) {
                 int dr = (row - selectedRow) > 0 ? 1 : -1;
@@ -217,7 +250,7 @@ void CheckersBoard::onCellClick(int row, int col) {
     }
 }
 
-std::vector<std::pair<int, int>> CheckersBoard::calculateMoves(int row, int col) const{
+std::vector<std::pair<int, int>> CheckersBoard::calculateMoves(int row, int col) const {
     std::vector<std::pair<int, int>> moves;
     Checker* chk = board[row][col];
     if (!chk) return moves;
@@ -226,75 +259,86 @@ std::vector<std::pair<int, int>> CheckersBoard::calculateMoves(int row, int col)
     bool isWhite = chk->isWhite();
     int forward = isWhite ? -1 : 1;
 
-    // Directions: для обычных - только вперед, для дамок - все направления
     std::vector<int> dirs;
     if (isKing) dirs = { -1, 1 };
     else dirs = { forward };
 
+    // Для обычных шашек
     if (!isKing) {
-        // Проверка обычных ходов и прыжков
-        for (int dr : dirs) {
-            for (int dc : {-1, 1}) {
-                // Обычный ход
-                int nr = row + dr;
-                int nc = col + dc;
-                if (isInside(nr, nc) && !board[nr][nc]) {
-                    if (!isKing || checkPath(row, col, nr, nc)) {
-                        moves.emplace_back(nr, nc);
-                    }
-                }
+        std::vector<std::pair<int, int>> jumpMoves;
 
-                // Прыжок через фигуру
+        // Собираем прыжки
+        for (int dr : dirs) {
+            for (int dc : { -1, 1 }) {
                 int jr = row + 2 * dr;
                 int jc = col + 2 * dc;
                 if (isInside(jr, jc) && !board[jr][jc]) {
                     Checker* mid = board[row + dr][col + dc];
                     if (mid && mid->isWhite() != isWhite) {
-                        if (!isKing || checkPath(row, col, jr, jc)) {
-                            moves.emplace_back(jr, jc);
-                        }
+                        jumpMoves.emplace_back(jr, jc);
                     }
                 }
             }
         }
-    }
-    else {    // Дополнительные ходы для дамок
-        for (int dr : {-1, 1}) {
-            for (int dc : {-1, 1}) {
-                bool hasEnemy = false;
-                int jumpR = -1, jumpC = -1;
 
+        if (!jumpMoves.empty()) {
+            return jumpMoves;
+        }
+
+        // Обычные ходы, если нет прыжков
+        for (int dr : dirs) {
+            for (int dc : { -1, 1 }) {
+                int nr = row + dr;
+                int nc = col + dc;
+                if (isInside(nr, nc) && !board[nr][nc]) {
+                    moves.emplace_back(nr, nc);
+                }
+            }
+        }
+    }
+    // Для дамок
+    else {
+        std::vector<std::pair<int, int>> jumpMoves;
+
+        for (int dr : { -1, 1 }) {
+            for (int dc : { -1, 1 }) {
+                bool hasEnemy = false;
                 for (int step = 1; step < SIZE; ++step) {
                     int nr = row + dr * step;
                     int nc = col + dc * step;
 
                     if (!isInside(nr, nc)) break;
 
-                    // Пустая клетка
-                    if (!board[nr][nc]) {
-                        if (!hasEnemy) {
-                            // Обычный ход
-                            moves.emplace_back(nr, nc);
+                    if (board[nr][nc]) {
+                        if (board[nr][nc]->isWhite() != isWhite && !hasEnemy) {
+                            hasEnemy = true;
                         }
-                        else if (jumpR == -1) {
-                            // Прыжок через врага
-                            moves.emplace_back(nr, nc);
-                            jumpR = nr;
-                            jumpC = nc;
-                        }
-                        continue;
+                        else break;
                     }
+                    else if (hasEnemy) {
+                        jumpMoves.emplace_back(nr, nc);
+                    }
+                }
+            }
+        }
 
-                    // Своя фигура
-                    if (board[nr][nc]->isWhite() == isWhite) break;
+        if (!jumpMoves.empty()) {
+            return jumpMoves;
+        }
 
-                    // Вражеская фигура
-                    if (hasEnemy) break; // Нельзя прыгать через две фигуры
-                    hasEnemy = true;
+        // Обычные ходы для дамок
+        for (int dr : { -1, 1 }) {
+            for (int dc : { -1, 1 }) {
+                for (int step = 1; step < SIZE; ++step) {
+                    int nr = row + dr * step;
+                    int nc = col + dc * step;
+                    if (!isInside(nr, nc) || board[nr][nc]) break;
+                    moves.emplace_back(nr, nc);
                 }
             }
         }
     }
+
     return moves;
 }
 
