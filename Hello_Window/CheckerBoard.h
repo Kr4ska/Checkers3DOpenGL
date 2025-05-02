@@ -8,19 +8,25 @@
 
 class CheckersBoard {
 public:
+    enum GameState { PLAYING, WHITE_WIN, BLACK_WIN };
+    GameState gameState = PLAYING;
     enum Player { WHITE, BLACK };
     Player currentPlayer = Player::WHITE;
     static constexpr int SIZE = 8;
     glm::vec3 origin;
     float cellSize;
     float height;
-    CheckersBoard(Model whiteModel,
-        Model blackModel,
+    Model whiteModel, blackModel;
+    CheckersBoard(Model whiteModel_,
+        Model blackModel_,
         Model highlightModel,
         glm::vec3 origin,
         float cellSize,
         float height = 0.0f);
     ~CheckersBoard();
+
+    void resetGame(); // Перезапуск игры
+    bool checkWinCondition();                          // Проверка победы
 
     // Process click on board cell
     void onCellClick(int row, int col);
@@ -52,13 +58,14 @@ private:
     }
 };
 
-CheckersBoard::CheckersBoard(Model whiteModel,
-    Model blackModel,
+CheckersBoard::CheckersBoard(Model whiteModel_,
+    Model blackModel_,
     Model highlightModel_,
     glm::vec3 origin_,
     float cellSize_,
     float height_)
-    : highlightModel(highlightModel_), origin(origin_), cellSize(cellSize_), height(height_) {
+    : highlightModel(highlightModel_), origin(origin_), cellSize(cellSize_), 
+    height(height_), blackModel(blackModel_), whiteModel(whiteModel_) {
     for (int r = 0; r < SIZE; ++r)
         for (int c = 0; c < SIZE; ++c)
             board[r][c] = nullptr;
@@ -76,6 +83,61 @@ CheckersBoard::~CheckersBoard() {
         for (int c = 0; c < SIZE; ++c)
             delete board[r][c];
     clearHighlights();
+}
+
+bool CheckersBoard::checkWinCondition() {
+    int whiteCount = 0, blackCount = 0;
+    for (int r = 0; r < SIZE; ++r) {
+        for (int c = 0; c < SIZE; ++c) {
+            if (board[r][c]) {
+                if (board[r][c]->isWhite()) whiteCount++;
+                else blackCount++;
+            }
+        }
+    }
+
+    if (whiteCount == 0) {
+        gameState = BLACK_WIN;
+        return true;
+    }
+    if (blackCount == 0) {
+        gameState = WHITE_WIN;
+        return true;
+    }
+    return false;
+}
+
+// Реализация перезапуска игры
+void CheckersBoard::resetGame() {
+    // Очистка доски
+    for (int r = 0; r < SIZE; ++r) {
+        for (int c = 0; c < SIZE; ++c) {
+            delete board[r][c];
+            board[r][c] = nullptr;
+        }
+    }
+
+    // Повторная инициализация
+    for (int r = 0; r < 3; ++r) {
+        for (int c = 0; c < SIZE; ++c) {
+            if ((r + c) % 2 == 1) {
+                board[r][c] = new Checker("Black", blackModel, cellPosition(r, c));
+            }
+        }
+    }
+    for (int r = 5; r < SIZE; ++r) {
+        for (int c = 0; c < SIZE; ++c) {
+            if ((r + c) % 2 == 1) {
+                board[r][c] = new Checker("White", whiteModel, cellPosition(r, c));
+            }
+        }
+    }
+
+    // Сброс состояния
+    gameState = PLAYING;
+    currentPlayer = Player::WHITE;
+    clearHighlights();
+    selectedChecker = nullptr;
 }
 
 bool CheckersBoard::hasCaptures(Player player) const {
@@ -285,7 +347,6 @@ void CheckersBoard::onCellClick(int row, int col) {
     }
 }
 
-// Метод calculateMoves
 std::vector<std::pair<int, int>> CheckersBoard::calculateMoves(int row, int col) const {
     std::vector<std::pair<int, int>> moves;
     Checker* chk = board[row][col];
@@ -386,9 +447,19 @@ void CheckersBoard::clearHighlights() {
 }
 
 void CheckersBoard::render(Shader& shader) {
-    for (int r = 0;r < SIZE;++r) for (int c = 0;c < SIZE;++c)
-        if (board[r][c]) board[r][c]->model.Draw(shader);
-    for (auto* h : highlights) h->model.Draw(shader);
+    if (gameState != PLAYING) {
+        // Отрисовка сообщения о победе 
+        //renderWinText(shader);
+    }
+    else {
+        for (int r = 0; r < SIZE; ++r)
+            for (int c = 0; c < SIZE; ++c)
+                if (board[r][c])
+                    board[r][c]->model.Draw(shader);
+
+        for (auto* h : highlights)
+            h->model.Draw(shader);
+    }
 }
 
 bool CheckersBoard::checkPath(int r1, int c1, int r2, int c2) const {

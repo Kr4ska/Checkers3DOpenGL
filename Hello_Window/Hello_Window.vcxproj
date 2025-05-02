@@ -174,14 +174,15 @@
     <Image Include="..\resources\objects\checker_white\DefaultMaterial_BaseColor.png" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="..\resources\objects\checker_white\shashka v4.obj">
+    <None Include="..\resources\objects\checker_white\shashka v4.obj">
       <FileType>Text</FileType>
-    </Text>
+    </None>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="..\resources\objects\checker_black\shashka v4.obj">
+    <None Include="..\resources\objects\checker_black\shashka v4.obj">
       <FileType>Text</FileType>
-    </Text>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
+    </None>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

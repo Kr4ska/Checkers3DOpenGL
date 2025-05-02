@@ -196,32 +196,16 @@ void Application::loadResources() {
     
     //Белые шашки
     Model white_checker("../resources/objects/checker_white/shashka v4.obj");
-    //for (float i = 0; i < 3; i++) {//высота
-    //    for (float j = 0; j < 4; j++) {//ширина
-    //        objects_.push_back(new Checker("white " + static_cast<int>(i), 
-    //            white_checker, 
-    //            { (2.0f /*Размер клетки*/) * (j + (static_cast<int>(i) % 2) / 2.0f) * 2 , 0.0f, ((2.0f) * i)}));
-    //    }
-    //}
 
     //Черные шашки
     Model black_checker("../resources/objects/checker_black/shashka v4.obj");
-    //for (float i = 0; i < 3; i++) {//высота
-    //    for (float j = 0; j < 4; j++) {//ширина
-    //        objects_.push_back(new Checker("black " + static_cast<int>(i),
-    //            black_checker,
-    //            { (2.0f) * (j + !(bool)(static_cast<int>(i) % 2) / 2.0f) * 2 , 0.0f, ((2.0f) * i) + 5.0f * 2 }));
-    //    }
-    //}
+
     Model hlM("../resources/objects/highlight/info.obj");
     
-    objects_.push_back(new Object ("info", hlM, { 3.0f, 3.0f, 3.0f }));
-    //objects_[0]->model.scale
     board = new CheckersBoard(
         white_checker, black_checker, hlM,
         glm::vec3(-7.0f, 0.1f, -7.0f), // adjust to match your grid spacing
         2.0f, 0.1f);
-    hlM.move({ 3.0,3.0,3.0 });    
 }
 
 //--Передвижение камеры на WASD
@@ -307,6 +291,9 @@ void Application::onKey(int key, int, int action, int) {
                 
             case GLFW_KEY_ENTER:
                 printSelected();
+                break;
+            case GLFW_KEY_R:
+                board->resetGame();
                 break;
         }
     }
