@@ -173,7 +173,7 @@ void Application::setupCallbacks() {
 
 //--Загрузка ресурсов
 void Application::loadResources() {
-    shader_ = new Shader("../6.multiple_lights.vs", "../6.multiple_lights.fs");
+    shader_ = new Shader("../Shaders/6.multiple_lights.vs", "../Shaders/6.multiple_lights.fs");
 
     shader_->use();
     shader_->setFloat("material.shininess", 32.0f);
@@ -237,7 +237,6 @@ void Application::render() {
     shader_->setVec3("spotLight.position", camera_.Position);
     shader_->setVec3("spotLight.direction", camera_.Front);
 
-    objects_[0]->model.Draw(*shader_);
     board->render(*shader_);
 }
 

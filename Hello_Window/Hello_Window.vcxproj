@@ -164,10 +164,12 @@
     <ClInclude Include="shader.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\6.light_cube.fs" />
-    <None Include="..\6.light_cube.vs" />
     <None Include="..\resources\objects\checker_black\shashka v4.mtl" />
     <None Include="..\resources\objects\checker_white\shashka v4.mtl" />
+    <None Include="..\Shaders\6.light_cube.fs" />
+    <None Include="..\Shaders\6.light_cube.vs" />
+    <None Include="..\Shaders\6.multiple_lights.fs" />
+    <None Include="..\Shaders\6.multiple_lights.vs" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\resources\objects\checker_black\DefaultMaterial_BaseColor.png" />
