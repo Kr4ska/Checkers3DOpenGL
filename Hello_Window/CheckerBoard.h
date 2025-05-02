@@ -82,12 +82,23 @@ bool CheckersBoard::hasCaptures(Player player) const {
     for (int r = 0; r < SIZE; ++r) {
         for (int c = 0; c < SIZE; ++c) {
             Checker* checker = board[r][c];
-            if (checker && ((player == Player::WHITE && checker->isWhite()) ||
-                (player == Player::BLACK && !checker->isWhite()))) {
-                auto moves = calculateMoves(r, c);
-                for (const auto& move : moves) {
-                    if (abs(move.first - r) > 1 || abs(move.second - c) > 1) {
-                        return true;
+            if (!checker || (player == Player::WHITE && !checker->isWhite())
+                || (player == Player::BLACK && checker->isWhite())) continue;
+
+            auto moves = calculateMoves(r, c);
+            for (const auto& move : moves) {
+                if (abs(move.first - r) > 1 || abs(move.second - c) > 1) {
+                    // Проверяем, есть ли реальный враг на пути
+                    int dr = (move.first - r) > 0 ? 1 : -1;
+                    int dc = (move.second - c) > 0 ? 1 : -1;
+                    int steps = std::max(abs(move.first - r), abs(move.second - c));
+
+                    for (int i = 1; i < steps; ++i) {
+                        int curR = r + dr * i;
+                        int curC = c + dc * i;
+                        if (board[curR][curC] && board[curR][curC]->isWhite() != checker->isWhite()) {
+                            return true; // Найдено реальное взятие
+                        }
                     }
                 }
             }
@@ -103,18 +114,36 @@ void CheckersBoard::onCellClick(int row, int col) {
     bool moveProcessed = false;
     bool mustCapture = hasCaptures(currentPlayer);
 
-    // Блок выбора шашки
+    // ─── Блок выбора шашки ────────────────────────────────────────────────
     if (clickedChecker && !selectedChecker) {
         if ((currentPlayer == Player::WHITE && clickedChecker->isWhite()) ||
             (currentPlayer == Player::BLACK && !clickedChecker->isWhite())) {
 
             auto moves = calculateMoves(row, col);
-            bool hasJump = std::any_of(moves.begin(), moves.end(), [row, col](const auto& m) {
-                return abs(m.first - row) > 1 || abs(m.second - col) > 1;
-                });
+            bool hasRealJump = std::any_of(moves.begin(), moves.end(), [row, col](const auto& m) {
+                return abs(m.first - row) > 1 || abs(m.second - col) > 1; });
+
+            // Проверяем только прыжки с реальным врагом на пути
+            for (const auto& move : moves) {
+                if (abs(move.first - row) > 1 || abs(move.second - col) > 1) {
+                    int dr = (move.first - row) > 0 ? 1 : -1;
+                    int dc = (move.second - col) > 0 ? 1 : -1;
+                    int steps = std::max(abs(move.first - row), abs(move.second - col));
+
+                    for (int i = 1; i < steps; ++i) {
+                        int curR = row + dr * i;
+                        int curC = col + dc * i;
+                        if (board[curR][curC] && board[curR][curC]->isWhite() != clickedChecker->isWhite()) {
+                            hasRealJump = true;
+                            break;
+                        }
+                    }
+                    if (hasRealJump) break;
+                }
+            }
 
             // Если есть обязательные взятия, но у шашки их нет - блокируем выбор
-            if (mustCapture && !hasJump) {
+            if (mustCapture && !hasRealJump) {
                 std::cout << "Вы должны выбрать шашку с возможностью взятия!\n";
                 return;
             }
@@ -124,18 +153,13 @@ void CheckersBoard::onCellClick(int row, int col) {
             selectedRow = row;
             selectedCol = col;
 
+            // Подсветка только реальных ходов
             for (const auto& m : moves) {
-                highlights.push_back(new Object(
-                    "Highlight",
-                    highlightModel,
-                    cellPosition(m.first, m.second)
-                ));
+                highlights.push_back(new Object("Highlight", highlightModel, cellPosition(m.first, m.second)));
             }
-            std::cout << "Выбрана шашка (" << row << "," << col << ")\n";
         }
         return;
     }
-
     // ─── Блок обработки хода ──────────────────────────────────────────────
     if (selectedChecker) {
         auto moves = calculateMoves(selectedRow, selectedCol);
@@ -143,11 +167,10 @@ void CheckersBoard::onCellClick(int row, int col) {
         bool isJumpMove = false;
         std::vector<std::pair<int, int>> capturedCheckers;
 
-        // Поиск выбранного хода в доступных
         for (const auto& move : moves) {
             if (move.first == row && move.second == col) {
                 validMove = true;
-                isJumpMove = abs(row - selectedRow) > 1;
+                isJumpMove = abs(row - selectedRow) > 1 || abs(col - selectedCol) > 1;
                 break;
             }
         }
@@ -158,19 +181,18 @@ void CheckersBoard::onCellClick(int row, int col) {
                 std::cout << "Вы должны совершить взятие!\n";
                 return;
             }
-            // Обработка прыжка и захвата шашек
+
+            // Обработка прыжка
             if (isJumpMove) {
                 int dr = (row - selectedRow) > 0 ? 1 : -1;
                 int dc = (col - selectedCol) > 0 ? 1 : -1;
                 int steps = std::max(abs(row - selectedRow), abs(col - selectedCol));
 
-                // Поиск и удаление всех шашек на пути
+                // Удаление съеденных шашек
                 for (int i = 1; i < steps; ++i) {
                     int curR = selectedRow + dr * i;
                     int curC = selectedCol + dc * i;
-
-                    if (board[curR][curC] &&
-                        board[curR][curC]->isWhite() != selectedChecker->isWhite()) {
+                    if (board[curR][curC] && board[curR][curC]->isWhite() != selectedChecker->isWhite()) {
                         delete board[curR][curC];
                         board[curR][curC] = nullptr;
                         capturedCheckers.emplace_back(curR, curC);
@@ -184,7 +206,7 @@ void CheckersBoard::onCellClick(int row, int col) {
             board[selectedRow][selectedCol] = nullptr;
             selectedChecker->newPos(cellPosition(row, col));
 
-            // Проверка на превращение в дамку
+            // Проверка превращения в дамку (только при движении вперед)
             if (!selectedChecker->getKing()) {
                 bool isWhite = selectedChecker->isWhite();
                 if ((isWhite && row == 0) || (!isWhite && row == SIZE - 1)) {
@@ -196,20 +218,34 @@ void CheckersBoard::onCellClick(int row, int col) {
             // Проверка продолжения прыжков
             if (!capturedCheckers.empty()) {
                 auto newMoves = calculateMoves(row, col);
-                bool hasMoreJumps = std::any_of(newMoves.begin(), newMoves.end(),
-                    [row,col](const auto& m) {
-                        return abs(m.first - row) > 1 || abs(m.second - col) > 1;
-                    });
+                bool hasMoreCaptures = false;
 
-                if (hasMoreJumps) {
-                    // Сохраняем состояние для продолжения прыжков
+                // Проверяем, есть ли новые враги для взятия
+                for (const auto& move : newMoves) {
+                    if (abs(move.first - row) > 1 || abs(move.second - col) > 1) {
+                        int dr = (move.first - row) > 0 ? 1 : -1;
+                        int dc = (move.second - col) > 0 ? 1 : -1;
+                        int steps = std::max(abs(move.first - row), abs(move.second - col));
+
+                        for (int i = 1; i < steps; ++i) {
+                            int curR = row + dr * i;
+                            int curC = col + dc * i;
+                            if (board[curR][curC] && board[curR][curC]->isWhite() != selectedChecker->isWhite()) {
+                                hasMoreCaptures = true;
+                                break;
+                            }
+                        }
+                        if (hasMoreCaptures) break;
+                    }
+                }
+
+                if (hasMoreCaptures) {
                     canJumpAgain = true;
                     jumpRow = row;
                     jumpCol = col;
                     selectedRow = row;
                     selectedCol = col;
 
-                    // Подсветка только прыжковых ходов
                     clearHighlights();
                     for (const auto& m : newMoves) {
                         if (abs(m.first - row) > 1 || abs(m.second - col) > 1) {
@@ -230,7 +266,6 @@ void CheckersBoard::onCellClick(int row, int col) {
             selectedChecker = nullptr;
             canJumpAgain = false;
 
-            // Смена игрока только если не было прыжков или они завершены
             if (capturedCheckers.empty() || !canJumpAgain) {
                 switchPlayer();
             }
@@ -246,10 +281,11 @@ void CheckersBoard::onCellClick(int row, int col) {
     if (!moveProcessed && clickedChecker && clickedChecker != selectedChecker) {
         clearHighlights();
         selectedChecker = nullptr;
-        onCellClick(row, col); // Рекурсивный вызов для выбора новой шашки
+        onCellClick(row, col);
     }
 }
 
+// Метод calculateMoves
 std::vector<std::pair<int, int>> CheckersBoard::calculateMoves(int row, int col) const {
     std::vector<std::pair<int, int>> moves;
     Checker* chk = board[row][col];
@@ -259,17 +295,13 @@ std::vector<std::pair<int, int>> CheckersBoard::calculateMoves(int row, int col)
     bool isWhite = chk->isWhite();
     int forward = isWhite ? -1 : 1;
 
-    std::vector<int> dirs;
-    if (isKing) dirs = { -1, 1 };
-    else dirs = { forward };
-
-    // Для обычных шашек
+    // Обычные шашки
     if (!isKing) {
         std::vector<std::pair<int, int>> jumpMoves;
 
-        // Собираем прыжки
-        for (int dr : dirs) {
-            for (int dc : { -1, 1 }) {
+        // Прыжки в любом направлении
+        for (int dr : {-1, 1}) {
+            for (int dc : {-1, 1}) {
                 int jr = row + 2 * dr;
                 int jc = col + 2 * dc;
                 if (isInside(jr, jc) && !board[jr][jc]) {
@@ -281,28 +313,28 @@ std::vector<std::pair<int, int>> CheckersBoard::calculateMoves(int row, int col)
             }
         }
 
-        if (!jumpMoves.empty()) {
-            return jumpMoves;
-        }
+        if (!jumpMoves.empty()) return jumpMoves;
 
-        // Обычные ходы, если нет прыжков
-        for (int dr : dirs) {
-            for (int dc : { -1, 1 }) {
-                int nr = row + dr;
-                int nc = col + dc;
-                if (isInside(nr, nc) && !board[nr][nc]) {
-                    moves.emplace_back(nr, nc);
-                }
+        // Обычные ходы только вперед
+        for (int dc : {-1, 1}) {
+            int nr = row + forward;
+            int nc = col + dc;
+            if (isInside(nr, nc) && !board[nr][nc]) {
+                moves.emplace_back(nr, nc);
             }
         }
     }
-    // Для дамок
+    // Дамки
     else {
+        // Для дамок: сначала проверяем все возможные прыжки
         std::vector<std::pair<int, int>> jumpMoves;
 
-        for (int dr : { -1, 1 }) {
-            for (int dc : { -1, 1 }) {
+        // Поиск прыжков с захватом вражеских шашек
+        for (int dr : {-1, 1}) {
+            for (int dc : {-1, 1}) {
                 bool hasEnemy = false;
+                int enemyR = -1, enemyC = -1;
+
                 for (int step = 1; step < SIZE; ++step) {
                     int nr = row + dr * step;
                     int nc = col + dc * step;
@@ -312,23 +344,29 @@ std::vector<std::pair<int, int>> CheckersBoard::calculateMoves(int row, int col)
                     if (board[nr][nc]) {
                         if (board[nr][nc]->isWhite() != isWhite && !hasEnemy) {
                             hasEnemy = true;
+                            enemyR = nr;
+                            enemyC = nc;
                         }
-                        else break;
+                        else {
+                            break; // Своя шашка или второй враг
+                        }
                     }
                     else if (hasEnemy) {
+                        // Добавляем прыжок, если после врага есть свободное место
                         jumpMoves.emplace_back(nr, nc);
                     }
                 }
             }
         }
 
+        // Если есть прыжки - возвращаем только их
         if (!jumpMoves.empty()) {
             return jumpMoves;
         }
 
-        // Обычные ходы для дамок
-        for (int dr : { -1, 1 }) {
-            for (int dc : { -1, 1 }) {
+        // Если прыжков нет - возвращаем все обычные ходы
+        for (int dr : {-1, 1}) {
+            for (int dc : {-1, 1}) {
                 for (int step = 1; step < SIZE; ++step) {
                     int nr = row + dr * step;
                     int nc = col + dc * step;
