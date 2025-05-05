@@ -140,13 +140,21 @@ bool Application::initWindow() {
     window_ = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Refactored OpenGL", nullptr, nullptr);
     if (!window_) { std::cerr << "GLFW window creation failed\n"; return false; }
     glfwMakeContextCurrent(window_);
-
+    
     if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress))) {
         std::cerr << "Failed to initialize GLAD\n";
         return false;
     }
     stbi_set_flip_vertically_on_load(true);
     glEnable(GL_DEPTH_TEST);
+    //Установка иконки
+    int w, h, ch;
+    unsigned char* icon = stbi_load("../resources/Icon.png", &w, &h, &ch, 4);
+    GLFWimage Icon[1];
+    Icon[0].width = w;
+    Icon[0].height = h;
+    Icon[0].pixels = icon;
+    glfwSetWindowIcon(window_, 1, Icon);
 
     return true;
 }
@@ -174,6 +182,7 @@ void Application::setupCallbacks() {
 
 //--Загрузка ресурсов
 void Application::loadResources() {
+
     shader_ = new Shader("../Shaders/6.multiple_lights.vs", "../Shaders/6.multiple_lights.fs");
 
     shader_->use();

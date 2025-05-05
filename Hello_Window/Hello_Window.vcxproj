@@ -161,6 +161,7 @@
     <ClInclude Include="mesh.h" />
     <ClInclude Include="model.h" />
     <ClInclude Include="Object.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="shader.h" />
   </ItemGroup>
   <ItemGroup>
@@ -176,6 +177,8 @@
     <None Include="..\Shaders\6.multiple_lights.vs" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="..\resources\Icon.ico" />
+    <Image Include="..\resources\Icon.png" />
     <Image Include="..\resources\objects\checker_black\DefaultMaterial_BaseColor.png" />
     <Image Include="..\resources\objects\checker_white\DefaultMaterial_BaseColor.png" />
     <Image Include="..\resources\objects\highlight\Textures\DefaultMaterial_Base_Color.png" />
@@ -201,6 +204,9 @@
     <None Include="..\resources\objects\highlight\Info.obj">
       <FileType>Document</FileType>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Model Loading.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

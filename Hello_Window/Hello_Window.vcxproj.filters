@@ -28,6 +28,9 @@
     <Filter Include="Файлы ресурсов\Highlight\Textures">
       <UniqueIdentifier>{8ee816d5-42ef-4dfb-9c8e-d6ebd96a4805}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Файлы ресурсов\Icons">
+      <UniqueIdentifier>{5a1e7dc5-2917-4c8a-a74a-4b1e2c84a58b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -54,6 +57,9 @@
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
     <ClInclude Include="CheckerBoard.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
   </ItemGroup>
@@ -126,5 +132,16 @@
     <Image Include="..\resources\objects\highlight\Textures\DefaultMaterial_Roughness.png">
       <Filter>Файлы ресурсов\Highlight\Textures</Filter>
     </Image>
+    <Image Include="..\resources\Icon.ico">
+      <Filter>Файлы ресурсов\Icons</Filter>
+    </Image>
+    <Image Include="..\resources\Icon.png">
+      <Filter>Файлы ресурсов\Icons</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Model Loading.rc">
+      <Filter>Файлы ресурсов\Icons</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>
