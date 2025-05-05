@@ -22,6 +22,12 @@
     <Filter Include="Файлы ресурсов\Shaders">
       <UniqueIdentifier>{1d0e0f2a-6106-410e-b6fc-981d1d855c20}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Файлы ресурсов\Highlight">
+      <UniqueIdentifier>{8e86ded1-8b24-42c1-a874-5c64f1f1ac04}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Файлы ресурсов\Highlight\Textures">
+      <UniqueIdentifier>{8ee816d5-42ef-4dfb-9c8e-d6ebd96a4805}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -76,6 +82,21 @@
     <None Include="..\Shaders\6.multiple_lights.vs">
       <Filter>Файлы ресурсов\Shaders</Filter>
     </None>
+    <None Include="..\resources\objects\highlight\Info.blend">
+      <Filter>Файлы ресурсов\Highlight</Filter>
+    </None>
+    <None Include="..\resources\objects\highlight\Info.fbx">
+      <Filter>Файлы ресурсов\Highlight</Filter>
+    </None>
+    <None Include="..\resources\objects\highlight\Info.mtl">
+      <Filter>Файлы ресурсов\Highlight</Filter>
+    </None>
+    <None Include="..\resources\objects\highlight\Info.stl">
+      <Filter>Файлы ресурсов\Highlight</Filter>
+    </None>
+    <None Include="..\resources\objects\highlight\Info.obj">
+      <Filter>Файлы ресурсов\Highlight</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\resources\objects\checker_white\DefaultMaterial_BaseColor.png">
@@ -83,6 +104,27 @@
     </Image>
     <Image Include="..\resources\objects\checker_black\DefaultMaterial_BaseColor.png">
       <Filter>Файлы ресурсов\Black_checher</Filter>
+    </Image>
+    <Image Include="..\resources\objects\highlight\Textures\DefaultMaterial_Base_Color.png">
+      <Filter>Файлы ресурсов\Highlight\Textures</Filter>
+    </Image>
+    <Image Include="..\resources\objects\highlight\Textures\DefaultMaterial_Height.png">
+      <Filter>Файлы ресурсов\Highlight\Textures</Filter>
+    </Image>
+    <Image Include="..\resources\objects\highlight\Textures\DefaultMaterial_Metallic.png">
+      <Filter>Файлы ресурсов\Highlight\Textures</Filter>
+    </Image>
+    <Image Include="..\resources\objects\highlight\Textures\DefaultMaterial_Mixed_AO.png">
+      <Filter>Файлы ресурсов\Highlight\Textures</Filter>
+    </Image>
+    <Image Include="..\resources\objects\highlight\Textures\DefaultMaterial_Normal.png">
+      <Filter>Файлы ресурсов\Highlight\Textures</Filter>
+    </Image>
+    <Image Include="..\resources\objects\highlight\Textures\DefaultMaterial_Normal_OpenGL.png">
+      <Filter>Файлы ресурсов\Highlight\Textures</Filter>
+    </Image>
+    <Image Include="..\resources\objects\highlight\Textures\DefaultMaterial_Roughness.png">
+      <Filter>Файлы ресурсов\Highlight\Textures</Filter>
     </Image>
   </ItemGroup>
 </Project>

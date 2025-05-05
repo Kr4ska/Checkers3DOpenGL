@@ -166,6 +166,10 @@
   <ItemGroup>
     <None Include="..\resources\objects\checker_black\shashka v4.mtl" />
     <None Include="..\resources\objects\checker_white\shashka v4.mtl" />
+    <None Include="..\resources\objects\highlight\Info.blend" />
+    <None Include="..\resources\objects\highlight\Info.fbx" />
+    <None Include="..\resources\objects\highlight\Info.mtl" />
+    <None Include="..\resources\objects\highlight\Info.stl" />
     <None Include="..\Shaders\6.light_cube.fs" />
     <None Include="..\Shaders\6.light_cube.vs" />
     <None Include="..\Shaders\6.multiple_lights.fs" />
@@ -174,6 +178,13 @@
   <ItemGroup>
     <Image Include="..\resources\objects\checker_black\DefaultMaterial_BaseColor.png" />
     <Image Include="..\resources\objects\checker_white\DefaultMaterial_BaseColor.png" />
+    <Image Include="..\resources\objects\highlight\Textures\DefaultMaterial_Base_Color.png" />
+    <Image Include="..\resources\objects\highlight\Textures\DefaultMaterial_Height.png" />
+    <Image Include="..\resources\objects\highlight\Textures\DefaultMaterial_Metallic.png" />
+    <Image Include="..\resources\objects\highlight\Textures\DefaultMaterial_Mixed_AO.png" />
+    <Image Include="..\resources\objects\highlight\Textures\DefaultMaterial_Normal.png" />
+    <Image Include="..\resources\objects\highlight\Textures\DefaultMaterial_Normal_OpenGL.png" />
+    <Image Include="..\resources\objects\highlight\Textures\DefaultMaterial_Roughness.png" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\resources\objects\checker_white\shashka v4.obj">
@@ -184,6 +195,11 @@
     <None Include="..\resources\objects\checker_black\shashka v4.obj">
       <FileType>Text</FileType>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\resources\objects\highlight\Info.obj">
+      <FileType>Document</FileType>
     </None>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
