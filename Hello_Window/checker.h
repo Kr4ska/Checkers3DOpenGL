@@ -30,5 +30,5 @@ Checker::Checker(std::string name_, Model model_, glm::vec3 position_ = { 0.0f, 
 Checker::~Checker()
 {
 }
-void Checker::setKing() { king = true; rotateModel({ 180.0f, 0.0f, 0.0f }); }
+void Checker::setKing() { king = true; rotateModel({ 0.0f, 0.0f, 180.0f }); }
 bool Checker::getKing() { return king; }
