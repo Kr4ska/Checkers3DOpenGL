@@ -35,23 +35,31 @@ public:
     // Данные модели 
     HitBox checkBox;
     glm::vec3 position;
+    float scale;
+    glm::vec3 rotation;
     vector<Texture> textures_loaded; // (оптимизация) сохраняем все загруженные текстуры, чтобы убедиться, что они не загружены более одного раза
     vector<Mesh> meshes;
     string directory;
     bool gammaCorrection;
     // Конструктор в качестве аргумента использует путь к 3D-модели
-    Model(string const &path, bool gamma = false) : gammaCorrection(gamma), position(0.0f, 0.0f, 0.0f)
+    Model(string const& path, bool gamma = false, glm::vec3 position_ = { 0.0f, 0.0f, 0.0f }, float scale_ = 1.0f, glm::vec3 rotation_ = { 0.0f, 0.0f, 0.0f })
+        : gammaCorrection(gamma), position(position_), scale(scale_), rotation(rotation_)
     {
         loadModel(path);
     }
-
+    void setScale(float newScale) { scale *= newScale; checkBox.radius *= newScale; }
+    void rotate(const glm::vec3& angles) { rotation += angles; }
     // Отрисовываем модель, а значит и все её меши
-    void Draw(Shader shader)
-    {
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, position);
-        shader.setMat4("model", model);
-        for(unsigned int i = 0; i < meshes.size(); i++)
+    void Draw(Shader shader) {
+        glm::mat4 modelMatrix = glm::mat4(1.0f);
+        modelMatrix = glm::translate(modelMatrix, position);
+        modelMatrix = glm::rotate(modelMatrix, glm::radians(rotation.x), glm::vec3(1, 0, 0));
+        modelMatrix = glm::rotate(modelMatrix, glm::radians(rotation.y), glm::vec3(0, 1, 0));
+        modelMatrix = glm::rotate(modelMatrix, glm::radians(rotation.z), glm::vec3(0, 0, 1));
+        modelMatrix = glm::scale(modelMatrix, glm::vec3(1.0f) * scale);
+        shader.setMat4("model", modelMatrix);
+
+        for (unsigned int i = 0; i < meshes.size(); i++)
             meshes[i].Draw(shader);
     }
 

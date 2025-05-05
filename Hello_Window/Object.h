@@ -17,6 +17,14 @@ public:
 	void newPos(glm::vec3);
 	Object(std::string, Model, glm::vec3);
 	~Object();
+
+	void scaleModel(float scale) {
+		model.setScale(scale);
+	}
+
+	void rotateModel(const glm::vec3& angles) {
+		model.rotate(angles);
+	}
 };
 
 void Object::move(glm::vec3 diretion) {

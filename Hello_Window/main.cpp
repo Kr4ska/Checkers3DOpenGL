@@ -59,6 +59,7 @@ private:
     bool modelSelected_ = false;
     bool cursorLocked_ = true;
     bool altPressed_ = false;
+    bool editMode = false;
     glm::dvec2 preLockPos_;
 
     // Shader
@@ -201,7 +202,8 @@ void Application::loadResources() {
     Model black_checker("../resources/objects/checker_black/shashka v4.obj");
 
     Model hlM("../resources/objects/highlight/info.obj");
-    
+    objects_.push_back(new Object("test",white_checker, {3.0f,4.0f,8.0f}));
+
     board = new CheckersBoard(
         white_checker, black_checker, hlM,
         glm::vec3(-7.0f, 0.1f, -7.0f), // adjust to match your grid spacing
@@ -238,6 +240,10 @@ void Application::render() {
     shader_->setVec3("spotLight.direction", camera_.Front);
 
     board->render(*shader_);
+
+    for (auto object : objects_) {
+        object->model.Draw(*shader_);
+    }
 }
 
 //==================================================================================================
@@ -291,8 +297,33 @@ void Application::onKey(int key, int, int action, int) {
             case GLFW_KEY_ENTER:
                 printSelected();
                 break;
+
             case GLFW_KEY_R:
                 board->resetGame();
+                break;
+            case GLFW_KEY_P:
+                editMode = !editMode;
+                std::cout << "Режим переключен на "<<(editMode ? "Редактирования":"Игры") <<"\n";
+                break;
+
+            case GLFW_KEY_EQUAL: // Увеличение
+                if (selectedObject_)
+                    selectedObject_->scaleModel(1.1f);
+                break;
+
+            case GLFW_KEY_MINUS: // Уменьшение
+                if (selectedObject_)
+                    selectedObject_->scaleModel(0.9f);
+                break;
+
+            case GLFW_KEY_Q: // Вращение по оси Y
+                if (selectedObject_)
+                    selectedObject_->rotateModel(glm::vec3(0, 5.0f, 0));
+                break;
+
+            case GLFW_KEY_E:
+                if (selectedObject_)
+                    selectedObject_->rotateModel(glm::vec3(0, -5.0f, 0));
                 break;
         }
     }
@@ -311,7 +342,22 @@ void Application::onMouseButton(int button, int action) {
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS && !cursorLocked_) {
         double x, y; glfwGetCursorPos(window_, &x, &y);
         int row, col;
-        if (screenToBoardCoords(x, y, row, col)) board->onCellClick(row, col);
+        if (editMode) {
+            Ray click = generateRay(x, y);
+            for (auto model : objects_) {
+                float t;
+                if (testIntersection(click, model->model.checkBox, t)) {
+                    modelSelected_ = true;
+                    selectedObject_ = model;
+                    std::cout << "Модель выбрана \n";
+                    break;
+                }
+            }
+        }
+        else {
+            if (screenToBoardCoords(x, y, row, col))
+                board->onCellClick(row, col);
+        }
     }
 }
 
@@ -330,9 +376,15 @@ Ray Application::generateRay(int mouseX, int mouseY) const {
 
 //--Обработка пересечений Хитбокса(цилиндр) с лучём
 bool Application::testIntersection(const Ray& ray, const HitBox& box, float& t) const {
+
     glm::mat4 invModel = glm::translate(glm::mat4(1.0f), -box.position);
+
+    //invModel = glm::scale(invModel, 1.0f / selectedObject_->model.scale); // Учет масштаба
+
     glm::vec3 o = invModel * glm::vec4(ray.origin, 1.0f);
+
     glm::vec3 d = invModel * glm::vec4(ray.direction, 0.0f);
+
     float a = d.x * d.x + d.z * d.z;
     float b = 2.0f * (o.x * d.x + o.z * d.z);
     float c = o.x * o.x + o.z * o.z - box.radius * box.radius;
@@ -408,7 +460,9 @@ void Application::moveSelected(int key) {
 
 //Вывод координат выбранной модели
 void Application::printSelected() const{
-    std::cout << selectedObject_->position.x << " " << selectedObject_->position.y << " " << selectedObject_->position.z << std::endl;
+    std::cout << "Координаты: " << "X: "<<selectedObject_->position.x << " Y:" << selectedObject_->position.y << " Z:" << selectedObject_->position.z << std::endl
+        <<"Масштаб: "<<selectedObject_->model.scale<<std::endl
+        <<"Вращение: " << "X: " << selectedObject_->model.rotation.x << " Y:" << selectedObject_->model.rotation.y << " Z:" << selectedObject_->model.rotation.z << std::endl;
     return;
 }
 
