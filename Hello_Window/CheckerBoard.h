@@ -457,15 +457,13 @@ void CheckersBoard::render(Shader& shader) {
         // Отрисовка сообщения о победе 
         //renderWinText(shader);
     }
-    else {
-        for (int r = 0; r < SIZE; ++r)
-            for (int c = 0; c < SIZE; ++c)
-                if (board[r][c])
-                    board[r][c]->model.Draw(shader);
+    for (int r = 0; r < SIZE; ++r)
+        for (int c = 0; c < SIZE; ++c)
+            if (board[r][c])
+                board[r][c]->model.Draw(shader);
 
-        for (auto* h : highlights)
-            h->model.Draw(shader);
-    }
+    for (auto* h : highlights)
+        h->model.Draw(shader);
 }
 
 bool CheckersBoard::checkPath(int r1, int c1, int r2, int c2) const {
