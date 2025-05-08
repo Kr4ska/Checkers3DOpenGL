@@ -86,25 +86,29 @@ CheckersBoard::~CheckersBoard() {
 }
 
 bool CheckersBoard::checkWinCondition() {
-    int whiteCount = 0, blackCount = 0;
-    for (int r = 0; r < SIZE; ++r) {
-        for (int c = 0; c < SIZE; ++c) {
-            if (board[r][c]) {
-                if (board[r][c]->isWhite()) whiteCount++;
-                else blackCount++;
+    for (int row = 0; row < SIZE; row++) {
+        for (int col = 0; col < SIZE; col++) {
+            if(board[row][col] != nullptr) {
+                if (board[row][col]->isWhite() && currentPlayer == Player::WHITE) {
+                    if (!calculateMoves(row, col).empty()) {
+                        return false;
+                    }
+                }
+                else if (!board[row][col]->isWhite() && currentPlayer == Player::BLACK) {
+                    if (!calculateMoves(row, col).empty()) {
+                        return false;
+                    }
+                }
             }
         }
     }
-
-    if (whiteCount == 0) {
+    if (currentPlayer == Player::WHITE) {
         gameState = BLACK_WIN;
-        return true;
     }
-    if (blackCount == 0) {
+    else {
         gameState = WHITE_WIN;
-        return true;
     }
-    return false;
+    return true;
 }
 
 // Реализация перезапуска игры
@@ -171,7 +175,7 @@ bool CheckersBoard::hasCaptures(Player player) const {
 
 void CheckersBoard::onCellClick(int row, int col) {
     if (!isInside(row, col)) return;
-
+    if (gameState != PLAYING) std::cout << "Перезапустите игру (нажмите кнопку R)\n";
     Checker* clickedChecker = board[row][col];
     bool moveProcessed = false;
     bool mustCapture = hasCaptures(currentPlayer);
@@ -330,6 +334,8 @@ void CheckersBoard::onCellClick(int row, int col) {
 
             if (capturedCheckers.empty() || !canJumpAgain) {
                 switchPlayer();
+                if (checkWinCondition())
+                    std::cout << "Победа " << ((gameState == WHITE_WIN) ? "белых" : "черных") << std::endl;
             }
 
             moveProcessed = true;
@@ -339,7 +345,7 @@ void CheckersBoard::onCellClick(int row, int col) {
         }
     }
 
-    // ─── Блок смены выбора шашки ─────────────────────────────────────────
+    // ─── Смена выбора шашки ─────────────────────────────────────────
     if (!moveProcessed && clickedChecker && clickedChecker != selectedChecker) {
         clearHighlights();
         selectedChecker = nullptr;
