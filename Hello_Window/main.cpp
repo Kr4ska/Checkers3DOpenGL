@@ -204,18 +204,19 @@ void Application::loadResources() {
     shader_->setFloat("spotLight.cutOff", glm::cos(glm::radians(12.5f)));
     shader_->setFloat("spotLight.outerCutOff", glm::cos(glm::radians(15.0f)));
     
+    Model table("C:/Users/Andrey/Desktop/Polygon/resources/objects/table/10586_Chess Board_v2_Iterations-2.obj");
     //Белые шашки
     Model white_checker("../resources/objects/checker_white/shashka v4.obj");
 
     //Черные шашки
     Model black_checker("../resources/objects/checker_black/shashka v4.obj");
 
-    Model hlM("../resources/objects/highlight/info.obj");
-    objects_.push_back(new Object("test",white_checker, {3.0f,4.0f,8.0f}));
+    Model hlM("../resources/objects/highlight/info.fbx");
 
+    objects_.push_back(new Object("table", table, { 0.25,0.25,0.0 }, { 90.0f, 0.0f, 0.0f }, 0.479881f));
     board = new CheckersBoard(
         white_checker, black_checker, hlM,
-        glm::vec3(-7.0f, 0.1f, -7.0f), // adjust to match your grid spacing
+        glm::vec3(-7.0f, 0.1f, -7.0f), 
         2.0f, 0.1f);
 }
 
@@ -317,12 +318,12 @@ void Application::onKey(int key, int, int action, int) {
 
             case GLFW_KEY_EQUAL: // Увеличение
                 if (selectedObject_)
-                    selectedObject_->scaleModel(1.1f);
+                    selectedObject_->scaleModel(1.025f);
                 break;
 
             case GLFW_KEY_MINUS: // Уменьшение
                 if (selectedObject_)
-                    selectedObject_->scaleModel(0.9f);
+                    selectedObject_->scaleModel(0.975f);
                 break;
 
             case GLFW_KEY_Q: // Вращение по оси Y
@@ -333,6 +334,16 @@ void Application::onKey(int key, int, int action, int) {
             case GLFW_KEY_E:
                 if (selectedObject_)
                     selectedObject_->rotateModel(glm::vec3(0, -5.0f, 0));
+                break;
+
+            case GLFW_KEY_U: // Вращение по оси X
+                if (selectedObject_)
+                    selectedObject_->rotateModel(glm::vec3(5.0f, 0, 0));
+                break;
+
+            case GLFW_KEY_O:
+                if (selectedObject_)
+                    selectedObject_->rotateModel(glm::vec3(5.0f, 0, 0));
                 break;
         }
     }
@@ -453,7 +464,7 @@ bool Application::screenToBoardCoords(double mx, double my, int& outR, int& outC
 //--Движение выбранной фигуры
 void Application::moveSelected(int key) {
     if (!modelSelected_) return;
-    const float speed = 2.0f;
+    const float speed = 0.25f;
     glm::vec3 d(0.0f);
     switch (key) {
     case GLFW_KEY_UP:    d.z = -speed; break;

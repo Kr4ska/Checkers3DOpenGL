@@ -171,6 +171,7 @@
     <None Include="..\resources\objects\highlight\Info.fbx" />
     <None Include="..\resources\objects\highlight\Info.mtl" />
     <None Include="..\resources\objects\highlight\Info.stl" />
+    <None Include="..\resources\objects\table\10586_Chess Board_v2_Iterations-2.mtl" />
     <None Include="..\Shaders\6.light_cube.fs" />
     <None Include="..\Shaders\6.light_cube.vs" />
     <None Include="..\Shaders\6.multiple_lights.fs" />
@@ -188,6 +189,7 @@
     <Image Include="..\resources\objects\highlight\Textures\DefaultMaterial_Normal.png" />
     <Image Include="..\resources\objects\highlight\Textures\DefaultMaterial_Normal_OpenGL.png" />
     <Image Include="..\resources\objects\highlight\Textures\DefaultMaterial_Roughness.png" />
+    <Image Include="..\resources\objects\table\10586_Chess Board_v1_diffuse.JPG" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\resources\objects\checker_white\shashka v4.obj">
@@ -207,6 +209,9 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Model Loading.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Object Include="..\resources\objects\table\10586_Chess Board_v2_Iterations-2.obj" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

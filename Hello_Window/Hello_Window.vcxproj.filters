@@ -31,6 +31,9 @@
     <Filter Include="Файлы ресурсов\Icons">
       <UniqueIdentifier>{5a1e7dc5-2917-4c8a-a74a-4b1e2c84a58b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Файлы ресурсов\board">
+      <UniqueIdentifier>{d4229c27-62cf-487c-a2f9-e0afc2acd1a4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -103,6 +106,9 @@
     <None Include="..\resources\objects\highlight\Info.obj">
       <Filter>Файлы ресурсов\Highlight</Filter>
     </None>
+    <None Include="..\resources\objects\table\10586_Chess Board_v2_Iterations-2.mtl">
+      <Filter>Файлы ресурсов\board</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\resources\objects\checker_white\DefaultMaterial_BaseColor.png">
@@ -138,10 +144,18 @@
     <Image Include="..\resources\Icon.png">
       <Filter>Файлы ресурсов\Icons</Filter>
     </Image>
+    <Image Include="..\resources\objects\table\10586_Chess Board_v1_diffuse.JPG">
+      <Filter>Файлы ресурсов\board</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Model Loading.rc">
       <Filter>Файлы ресурсов\Icons</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Object Include="..\resources\objects\table\10586_Chess Board_v2_Iterations-2.obj">
+      <Filter>Файлы ресурсов\board</Filter>
+    </Object>
   </ItemGroup>
 </Project>
