@@ -11,6 +11,7 @@
 #include "checker.h"
 #include "Object.h"
 #include "CheckerBoard.h"
+#include "font.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -64,6 +65,9 @@ private:
 
     // Shader
     Shader* shader_ = nullptr;
+    Shader* shaderFont = nullptr;
+
+    Font* mainFont = nullptr;
 
     // Initialization helpers
     bool initWindow();
@@ -110,6 +114,8 @@ Application::Application() {
 Application::~Application() {
     delete shader_;
     delete selectedObject_;
+    delete board;
+    delete mainFont;
     glfwTerminate();
 }
 
@@ -204,7 +210,11 @@ void Application::loadResources() {
     shader_->setFloat("spotLight.cutOff", glm::cos(glm::radians(12.5f)));
     shader_->setFloat("spotLight.outerCutOff", glm::cos(glm::radians(15.0f)));
     
-    Model table("C:/Users/Andrey/Desktop/Polygon/resources/objects/table/10586_Chess Board_v2_Iterations-2.obj");
+    shaderFont = new Shader("../Shaders/text.vs", "../Shaders/text.fs");
+
+    mainFont = new Font("../resources/objects/Fonts/a_AlternaSw.TTF", 48);
+
+    Model table("../resources/objects/table/10586_Chess Board_v2_Iterations-2.obj");
     //Белые шашки
     Model white_checker("../resources/objects/checker_white/shashka v4.obj");
 
@@ -215,10 +225,10 @@ void Application::loadResources() {
 
     objects_.push_back(new Object("table", table, { 0.25,0.25,0.0 }, { 90.0f, 0.0f, 0.0f }, 0.479881f));
     board = new CheckersBoard(
-        white_checker, black_checker, hlM,
+        white_checker, black_checker, hlM, mainFont, shaderFont,
         glm::vec3(-7.0f, 0.1f, -7.0f), 
         2.0f, 0.1f);
-}
+} 
 
 //--Передвижение камеры на WASD
 void Application::processInput() {
@@ -249,11 +259,11 @@ void Application::render() {
     shader_->setVec3("spotLight.position", camera_.Position);
     shader_->setVec3("spotLight.direction", camera_.Front);
 
-    board->render(*shader_);
-
     for (auto object : objects_) {
         object->model.Draw(*shader_);
     }
+
+    board->render(*shader_);
 }
 
 //==================================================================================================

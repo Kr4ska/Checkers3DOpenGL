@@ -158,6 +158,7 @@
     <ClInclude Include="camera.h" />
     <ClInclude Include="checker.h" />
     <ClInclude Include="CheckerBoard.h" />
+    <ClInclude Include="font.h" />
     <ClInclude Include="mesh.h" />
     <ClInclude Include="model.h" />
     <ClInclude Include="Object.h" />
@@ -176,6 +177,8 @@
     <None Include="..\Shaders\6.light_cube.vs" />
     <None Include="..\Shaders\6.multiple_lights.fs" />
     <None Include="..\Shaders\6.multiple_lights.vs" />
+    <None Include="..\Shaders\text.fs" />
+    <None Include="..\Shaders\text.vs" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\resources\Icon.ico" />
@@ -211,7 +214,16 @@
     <ResourceCompile Include="Model Loading.rc" />
   </ItemGroup>
   <ItemGroup>
-    <Object Include="..\resources\objects\table\10586_Chess Board_v2_Iterations-2.obj" />
+    <Text Include="..\resources\objects\table\10586_Chess Board_v2_Iterations-2.obj">
+      <FileType>Document</FileType>
+    </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="..\resources\objects\Fonts\Antonio-Bold.ttf" />
+    <Font Include="..\resources\objects\Fonts\Antonio-Light.ttf" />
+    <Font Include="..\resources\objects\Fonts\Antonio-Regular.ttf" />
+    <Font Include="..\resources\objects\Fonts\a_AlternaSw.TTF" />
+    <Font Include="..\resources\objects\Fonts\OCRAEXT.TTF" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

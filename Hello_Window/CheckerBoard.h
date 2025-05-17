@@ -2,9 +2,11 @@
 
 #include <vector>
 #include <glm/glm.hpp>
+
 #include "Object.h"
 #include "Checker.h"
 #include "shader.h"
+#include "font.h"
 
 class CheckersBoard {
 public:
@@ -17,12 +19,19 @@ public:
     float cellSize;
     float height;
     Model whiteModel, blackModel;
+    glm::mat4 textProjection;
+    Font* font = nullptr;
+    glm::mat4* projection;
+    Shader* shaderFont;
+
     CheckersBoard(Model whiteModel_,
         Model blackModel_,
-        Model highlightModel,
-        glm::vec3 origin,
-        float cellSize,
-        float height = 0.0f);
+        Model highlightModel_,
+        Font* _font,
+        Shader* shaderFont_,
+        glm::vec3 origin_,
+        float cellSize_,
+        float height_ = 0.0f);
     ~CheckersBoard();
 
     void resetGame(); // Перезапуск игры
@@ -58,14 +67,19 @@ private:
     }
 };
 
-CheckersBoard::CheckersBoard(Model whiteModel_,
+CheckersBoard::CheckersBoard (
+    Model whiteModel_,
     Model blackModel_,
     Model highlightModel_,
+    Font* _font,
+    Shader* shaderFont_,
     glm::vec3 origin_,
     float cellSize_,
     float height_)
     : highlightModel(highlightModel_), origin(origin_), cellSize(cellSize_), 
-    height(height_), blackModel(blackModel_), whiteModel(whiteModel_) {
+    height(height_), blackModel(blackModel_), whiteModel(whiteModel_), font(_font), shaderFont(shaderFont_) {
+
+    textProjection = glm::ortho(0.0f, 1600.0f, 0.0f, 900.0f);
     for (int r = 0; r < SIZE; ++r)
         for (int c = 0; c < SIZE; ++c)
             board[r][c] = nullptr;
@@ -453,10 +467,7 @@ void CheckersBoard::clearHighlights() {
 }
 
 void CheckersBoard::render(Shader& shader) {
-    if (gameState != PLAYING) {
-        // Отрисовка сообщения о победе 
-        //renderWinText(shader);
-    }
+    // Сначала рисуем все элементы доски
     for (int r = 0; r < SIZE; ++r)
         for (int c = 0; c < SIZE; ++c)
             if (board[r][c])
@@ -464,6 +475,21 @@ void CheckersBoard::render(Shader& shader) {
 
     for (auto* h : highlights)
         h->model.Draw(shader);
+
+    // Затем рисуем текст поверх всего
+    if (gameState != PLAYING) {
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glDisable(GL_DEPTH_TEST);
+        font->RenderText(
+            "Winner winner chicken dinner",
+            100.0f, 100.0f, 1.0f,
+            { 1.0f, 1.0f, 1.0f },
+            textProjection,
+            *shaderFont);
+        glEnable(GL_DEPTH_TEST);
+        glDisable(GL_BLEND);
+    }
 }
 
 bool CheckersBoard::checkPath(int r1, int c1, int r2, int c2) const {

@@ -34,6 +34,9 @@
     <Filter Include="Файлы ресурсов\board">
       <UniqueIdentifier>{d4229c27-62cf-487c-a2f9-e0afc2acd1a4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Файлы ресурсов\Fonts">
+      <UniqueIdentifier>{921fc50c-c9a4-4c40-b0e1-4e0535f3738d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -63,6 +66,9 @@
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
     <ClInclude Include="resource.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="font.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
   </ItemGroup>
@@ -109,6 +115,12 @@
     <None Include="..\resources\objects\table\10586_Chess Board_v2_Iterations-2.mtl">
       <Filter>Файлы ресурсов\board</Filter>
     </None>
+    <None Include="..\Shaders\text.fs">
+      <Filter>Файлы ресурсов\Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\text.vs">
+      <Filter>Файлы ресурсов\Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\resources\objects\checker_white\DefaultMaterial_BaseColor.png">
@@ -154,8 +166,25 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <Object Include="..\resources\objects\table\10586_Chess Board_v2_Iterations-2.obj">
+    <Font Include="..\resources\objects\Fonts\a_AlternaSw.TTF">
+      <Filter>Файлы ресурсов\Fonts</Filter>
+    </Font>
+    <Font Include="..\resources\objects\Fonts\Antonio-Bold.ttf">
+      <Filter>Файлы ресурсов\Fonts</Filter>
+    </Font>
+    <Font Include="..\resources\objects\Fonts\Antonio-Light.ttf">
+      <Filter>Файлы ресурсов\Fonts</Filter>
+    </Font>
+    <Font Include="..\resources\objects\Fonts\Antonio-Regular.ttf">
+      <Filter>Файлы ресурсов\Fonts</Filter>
+    </Font>
+    <Font Include="..\resources\objects\Fonts\OCRAEXT.TTF">
+      <Filter>Файлы ресурсов\Fonts</Filter>
+    </Font>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\resources\objects\table\10586_Chess Board_v2_Iterations-2.obj">
       <Filter>Файлы ресурсов\board</Filter>
-    </Object>
+    </Text>
   </ItemGroup>
 </Project>
