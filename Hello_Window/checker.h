@@ -15,7 +15,9 @@ public:
 	void setKing();
 	bool getKing();
 	bool isWhite() const { return name.find("White") != std::string::npos; }
-
+	void newPos(glm::vec3 new_pos) {
+		Object::newPos(new_pos + glm::vec3(0.0f, king == true ? 1.0f : 0.0f, 0.0f));
+	}
 private:
 	bool king;
 };

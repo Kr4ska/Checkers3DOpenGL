@@ -46,7 +46,7 @@ private:
     double lastFrame_ = 0.0f;
 
     // Camera & view/projection
-    Camera camera_{ glm::vec3(0.0f, 10.0f, 3.0f) };
+    Camera camera_{ glm::vec3(0.0f, 30.0f, 0.0f) };
     glm::mat4 projection_;
     glm::mat4 view_;
     float lastX_ = SCR_WIDTH / 2.0f;
@@ -221,7 +221,7 @@ void Application::loadResources() {
     //Черные шашки
     Model black_checker("../resources/objects/checker_black/shashka v4.obj");
 
-    Model hlM("../resources/objects/highlight/info.fbx");
+    Model hlM("../resources/objects/highlight/info.obj");
 
     objects_.push_back(new Object("table", table, { 0.25,0.25,0.0 }, { 90.0f, 0.0f, 0.0f }, 0.479881f));
     board = new CheckersBoard(
