@@ -23,11 +23,7 @@ private:
 };
 
 Checker::Checker(std::string name_, Model model_, glm::vec3 position_ = { 0.0f, 0.0f, 0.0f }) :
-										Object("Checker " + name_, model_, position_), king(false)
-{
-	std::cout << name << position.x << " " << position.y << " " << position.z << std::endl;
-	std::cout << model.position.x << " " << model.position.y << " " << model.position.z << std::endl;
-}
+										Object("Checker " + name_, model_, position_), king(false){}
 
 Checker::~Checker()
 {

@@ -481,10 +481,15 @@ void CheckersBoard::render(Shader& shader) {
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glDisable(GL_DEPTH_TEST);
+        string winText;
+
+        if (gameState == WHITE_WIN) winText = "White win";
+        else winText = "Black win";
+
         font->RenderText(
-            "Winner winner chicken dinner",
+            winText,
             100.0f, 100.0f, 1.0f,
-            { 1.0f, 1.0f, 1.0f },
+            { 1.0f, 1.0f, 0.0f },
             textProjection,
             *shaderFont);
         glEnable(GL_DEPTH_TEST);
